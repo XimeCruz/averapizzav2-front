@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión'),
-          backgroundColor: Colors.lightGreenAccent[400],
+          backgroundColor: Color(0xFF4ADE80),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Rol no válido'),
-            backgroundColor: Colors.lightGreenAccent[400],
+            backgroundColor: Color(0xFF4ADE80),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -240,37 +240,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  // Container(
-                  //   decoration: BoxDecoration(
-                  //     color: const Color(0xFF2A2A2A),
-                  //     borderRadius: BorderRadius.circular(12),
-                  //     border: Border.all(color: const Color(0xFF3A3A3A)),
-                  //   ),
-                  //   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  //   child: DropdownButtonFormField<String>(
-                  //     value: selectedRole,
-                  //     dropdownColor: const Color(0xFF2A2A2A),
-                  //     decoration: const InputDecoration(
-                  //       labelText: 'Rol',
-                  //       labelStyle: TextStyle(color: Color(0xFF888888)),
-                  //       border: InputBorder.none,
-                  //     ),
-                  //     style: const TextStyle(color: Colors.white),
-                  //     items: const [
-                  //       DropdownMenuItem(value: 'CLIENTE', child: Text('Cliente')),
-                  //       DropdownMenuItem(value: 'CAJERO', child: Text('Cajero')),
-                  //       DropdownMenuItem(value: 'COCINA', child: Text('Cocina')),
-                  //       DropdownMenuItem(value: 'ADMIN', child: Text('Administrador')),
-                  //     ],
-                  //     onChanged: (value) {
-                  //       if (value != null) {
-                  //         setState(() {
-                  //           selectedRole = value;
-                  //         });
-                  //       }
-                  //     },
-                  //   ),
-                  // ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -485,25 +454,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ).animate().scale(duration: 800.ms).fadeIn(),
 
                   const SizedBox(height: 48),
-
-                  // Logo
-                  // Row(
-                  //   mainAxisSize: MainAxisSize.min,
-                  //   children: [
-                  //     const Text(
-                  //       'A VERA PIZZA',
-                  //       style: TextStyle(
-                  //         color: Color(0xFF4ADE80),
-                  //         fontSize: 32,
-                  //         fontWeight: FontWeight.bold,
-                  //         fontStyle: FontStyle.italic,
-                  //         letterSpacing: 2,
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ).animate().fadeIn(delay: 300.ms),
-
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -600,7 +550,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // Top section with pizza image
           Container(
             height: MediaQuery.of(context).size.height * 0.5,
             decoration: const BoxDecoration(

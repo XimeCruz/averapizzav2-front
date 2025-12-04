@@ -1,7 +1,5 @@
 class ApiConstants {
-  // ⚠️ IMPORTANTE: Cambia esta URL por la de tu backend
-  // Para emulador Android usa: http://10.0.2.2:8080
-  // Para dispositivo físico usa tu IP local: http://192.168.X.X:8080
+
   static const String baseUrl = 'http://localhost:8089';
   static const String apiVersion = '/api';
 

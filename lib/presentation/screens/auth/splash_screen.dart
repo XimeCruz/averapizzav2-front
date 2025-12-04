@@ -84,7 +84,6 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo de la pizzería (imagen real)
               Container(
                 width: 220,
                 height: 220,
@@ -105,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 child: ClipOval(
                   child: Image.asset(
-                    'assets/images/logo.png', // Ruta de tu imagen
+                    'assets/images/logo.png',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback si la imagen no carga
