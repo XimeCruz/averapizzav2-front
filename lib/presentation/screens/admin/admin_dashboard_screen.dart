@@ -109,49 +109,49 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             icon: const Icon(Icons.refresh, color: Colors.white70),
             onPressed: _loadData,
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle, color: Colors.white70),
-            color: const Color(0xFF1A1A1A),
-            onSelected: (value) {
-              if (value == 'logout') _logout();
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                enabled: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      authProvider.userName ?? 'Usuario',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      authProvider.userEmail ?? '',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white60,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.redAccent),
-                    SizedBox(width: 8),
-                    Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // PopupMenuButton<String>(
+          //   icon: const Icon(Icons.account_circle, color: Colors.white70),
+          //   color: const Color(0xFF1A1A1A),
+          //   onSelected: (value) {
+          //     if (value == 'logout') _logout();
+          //   },
+          //   itemBuilder: (context) => [
+          //     PopupMenuItem(
+          //       enabled: false,
+          //       child: Column(
+          //         crossAxisAlignment: CrossAxisAlignment.start,
+          //         children: [
+          //           Text(
+          //             authProvider.userName ?? 'Usuario',
+          //             style: const TextStyle(
+          //               fontWeight: FontWeight.bold,
+          //               fontSize: 16,
+          //               color: Colors.white,
+          //             ),
+          //           ),
+          //           Text(
+          //             authProvider.userEmail ?? '',
+          //             style: const TextStyle(
+          //               fontSize: 12,
+          //               color: Colors.white60,
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //     const PopupMenuDivider(),
+          //     const PopupMenuItem(
+          //       value: 'logout',
+          //       child: Row(
+          //         children: [
+          //           Icon(Icons.logout, color: Colors.redAccent),
+          //           SizedBox(width: 8),
+          //           Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
+          //         ],
+          //       ),
+          //     ),
+          //   ],
+          // ),
           if (isDesktop) const SizedBox(width: 8),
         ],
       ),
@@ -249,7 +249,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   height: _isSidebarExpanded ? 60 : 40,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                      colors: [Color(0xFF388E3C), Color(0xFF2E7D32)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -413,7 +413,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundColor: AppColors.secondary,
                     child: Text(
                       (authProvider.userName?.substring(0, 1) ?? 'A').toUpperCase(),
                       style: const TextStyle(
@@ -449,7 +449,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    icon: const Icon(Icons.logout, color: AppColors.secondary, size: 20),
                     onPressed: _logout,
                     tooltip: 'Cerrar Sesión',
                   ),
@@ -471,7 +471,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 children: [
                   CircleAvatar(
-                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundColor: AppColors.secondary,
                     radius: 20,
                     child: Text(
                       (authProvider.userName?.substring(0, 1) ?? 'A').toUpperCase(),
@@ -481,9 +481,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 20),
                   IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    icon: const Icon(Icons.logout, color: AppColors.secondary, size: 20),
                     onPressed: _logout,
                     tooltip: 'Cerrar Sesión',
                     padding: EdgeInsets.zero,
@@ -508,7 +508,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                colors: [Color(0xFF79DE65), Color(0xFF05551C)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -765,9 +765,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               childAspectRatio: isDesktop ? 1.3 : 1.2,
               children: [
                 _ModernStatCard(
-                  title: 'Total Transacciones',
+                  title: 'Total Pedidos',
                   value: '${data.totalVentas}',
-                  subtitle: 'Todas las transacciones',
+                  subtitle: 'Todos los pedidos',
                   icon: Icons.shopping_cart_outlined,
                   color: const Color(0xFF3B82F6),
                   gradientColors: [
@@ -864,11 +864,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   color: const Color(0xFF8B5CF6),
                 ),
                 _TransactionStateCard(
-                  title: 'Alertas de Stock',
+                  title: 'Entregadas',
                   value: '${data.insumosBajoStock}',
-                  subtitle: 'Insumos bajos',
-                  icon: Icons.warning_amber,
-                  color: const Color(0xFFEF4444),
+                  subtitle: 'Pedidos',
+                  icon: Icons.check_circle_outline,
+                  color: const Color(0xFF10B981),
                 ),
               ],
             ),
@@ -1114,10 +1114,10 @@ class _SidebarItem extends StatelessWidget {
                   vertical: 12
               ),
               decoration: BoxDecoration(
-                color: isActive ? const Color(0xFF3B82F6).withOpacity(0.1) : Colors.transparent,
+                color: isActive ? AppColors.secondary.withOpacity(0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isActive ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.transparent,
+                  color: isActive ? AppColors.secondary.withOpacity(0.3) : Colors.transparent,
                   width: 1,
                 ),
               ),
@@ -1126,7 +1126,7 @@ class _SidebarItem extends StatelessWidget {
                 children: [
                   Icon(
                     icon,
-                    color: isActive ? const Color(0xFF3B82F6) : Colors.white60,
+                    color: isActive ? AppColors.secondary : Colors.white60,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -1134,7 +1134,7 @@ class _SidebarItem extends StatelessWidget {
                     child: Text(
                       title,
                       style: TextStyle(
-                        color: isActive ? const Color(0xFF3B82F6) : Colors.white70,
+                        color: isActive ? AppColors.secondary : Colors.white70,
                         fontSize: 14,
                         fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                       ),
@@ -1145,7 +1145,7 @@ class _SidebarItem extends StatelessWidget {
                   : Center(
                 child: Icon(
                   icon,
-                  color: isActive ? const Color(0xFF3B82F6) : Colors.white60,
+                  color: isActive ? AppColors.secondary : Colors.white60,
                   size: 24,
                 ),
               ),
