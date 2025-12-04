@@ -659,14 +659,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            'A VERA PIZZA',
+                          Text(
+                            'A Vera Pizza',
                             style: TextStyle(
+                              fontSize: 56,
+                              fontWeight: FontWeight.w900,
                               color: Color(0xFF4ADE80),
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              fontStyle: FontStyle.italic,
-                              letterSpacing: 1.5,
+                              letterSpacing: -2,
+                              height: 1,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  offset: const Offset(2, 2),
+                                  blurRadius: 4,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -732,7 +739,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: 38,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -792,7 +799,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
 
           // Password field
           Column(
@@ -848,53 +855,55 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 16),
 
           // Remember me and Forgot password
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
-                      },
-                      activeColor: const Color(0xFF4ADE80),
-                      checkColor: Colors.black,
-                      side: const BorderSide(color: Color(0xFF3A3A3A)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Recordarme',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  '¿Has olvidado tu contraseña?',
-                  style: TextStyle(
-                    color: Color(0xFF4ADE80),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Row(
+          //       children: [
+          //         SizedBox(
+          //           width: 20,
+          //           height: 20,
+          //           child: Checkbox(
+          //             value: _rememberMe,
+          //             onChanged: (value) {
+          //               setState(() {
+          //                 _rememberMe = value ?? false;
+          //               });
+          //             },
+          //             activeColor: const Color(0xFF4ADE80),
+          //             checkColor: Colors.black,
+          //             side: const BorderSide(color: Color(0xFF3A3A3A)),
+          //             shape: RoundedRectangleBorder(
+          //               borderRadius: BorderRadius.circular(4),
+          //             ),
+          //           ),
+          //         ),
+          //         const SizedBox(width: 8),
+          //         Text(
+          //           'Recordarme',
+          //           style: TextStyle(
+          //             color: Colors.grey[400],
+          //             fontSize: 13,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //     TextButton(
+          //       onPressed: () {},
+          //       child: const Text(
+          //         '¿Has olvidado tu contraseña?',
+          //         style: TextStyle(
+          //           color: Color(0xFF4ADE80),
+          //           fontSize: 13,
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+
+          //const SizedBox(height: 24),
 
           // Sign In button
           Consumer<AuthProvider>(
@@ -963,7 +972,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
 
           Row(
             children: [
@@ -971,13 +980,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
 
           Center(
             child: Column(
               children: [
                 Text(
-                  '¿Solo quieres explorar?',
+                  '¿Quieres ordenar algo?',
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 14,
@@ -1001,33 +1010,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Footer
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'La Paz, Bolivia',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              Text('  •  ', style: TextStyle(color: Colors.grey[600])),
-              Text(
-                'Copyright 2025',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-            ],
           ),
         ],
       ),
