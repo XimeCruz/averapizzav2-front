@@ -768,7 +768,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   title: 'Total Pedidos',
                   value: '${data.totalVentas}',
                   subtitle: 'Todos los pedidos',
-                  icon: Icons.shopping_cart_outlined,
+                  icon: Icons.pending_actions,
                   color: const Color(0xFF3B82F6),
                   gradientColors: [
                     const Color(0xFF3B82F6),
