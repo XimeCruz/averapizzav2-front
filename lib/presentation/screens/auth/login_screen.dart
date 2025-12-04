@@ -202,9 +202,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             contentPadding: EdgeInsets.zero,
                             isDense: true,
                           ),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 18,
                           ),
                           icon: const Icon(
                             Icons.keyboard_arrow_down,
