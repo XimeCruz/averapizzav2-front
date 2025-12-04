@@ -100,7 +100,11 @@ class MyApp extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.error),
+              borderSide: const BorderSide(color: Color(0xFF4ADE80)),
+            ),
+            errorStyle: const TextStyle(
+              color: Color(0xFF4ADE80),
+              fontSize: 12,
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
