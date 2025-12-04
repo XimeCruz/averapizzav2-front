@@ -487,21 +487,49 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 48),
 
                   // Logo
+                  // Row(
+                  //   mainAxisSize: MainAxisSize.min,
+                  //   children: [
+                  //     const Text(
+                  //       'A VERA PIZZA',
+                  //       style: TextStyle(
+                  //         color: Color(0xFF4ADE80),
+                  //         fontSize: 32,
+                  //         fontWeight: FontWeight.bold,
+                  //         fontStyle: FontStyle.italic,
+                  //         letterSpacing: 2,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ).animate().fadeIn(delay: 300.ms),
+
+
                   Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'A VERA PIZZA',
+                      Text(
+                        'A Vera Pizza',
                         style: TextStyle(
+                          fontSize: 56,
+                          fontWeight: FontWeight.w900,
                           color: Color(0xFF4ADE80),
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          fontStyle: FontStyle.italic,
-                          letterSpacing: 2,
+                          letterSpacing: -2,
+                          height: 1,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.5),
+                              offset: const Offset(2, 2),
+                              blurRadius: 4,
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ).animate().fadeIn(delay: 300.ms),
+                  )
+                      .animate()
+                      .fadeIn(delay: 400.ms, duration: 600.ms)
+                      .slideX(begin: -0.3, end: 0),
 
                   const SizedBox(height: 24),
 
