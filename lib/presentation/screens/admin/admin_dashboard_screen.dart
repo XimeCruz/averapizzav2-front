@@ -94,10 +94,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         automaticallyImplyLeading: !isDesktop,
         title: Row(
           children: [
-            if (!isDesktop) ...[
-              const Icon(Icons.dashboard_outlined, color: Colors.white70),
-              const SizedBox(width: 12),
-            ],
             const Text(
               'Panel de Administración',
               style: TextStyle(color: Colors.white),
@@ -304,6 +300,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onTap: () {},
                 ),
                 _SidebarItem(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Inventario',
+                  isExpanded: _isSidebarExpanded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const InsumosListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _SidebarItem(
                   icon: Icons.local_pizza,
                   title: 'Productos',
                   isExpanded: _isSidebarExpanded,
@@ -318,7 +327,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _SidebarItem(
                   icon: Icons.category_outlined,
-                  title: 'Categorías',
+                  title: 'Recetas',
                   isExpanded: _isSidebarExpanded,
                   onTap: () {},
                 ),
@@ -330,7 +339,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _SidebarItem(
                   icon: Icons.person_outline,
-                  title: 'Usuarios',
+                  title: 'Empleados',
                   isExpanded: _isSidebarExpanded,
                   onTap: () {},
                 ),
@@ -343,19 +352,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => const PedidosListScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _SidebarItem(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Insumos',
-                  isExpanded: _isSidebarExpanded,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const InsumosListScreen(),
                       ),
                     );
                   },
@@ -398,7 +394,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
 
-          // Usuario info en el footer
           if (_isSidebarExpanded)
             Container(
               padding: const EdgeInsets.all(16),
@@ -561,6 +556,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onTap: () => Navigator.pop(context),
                 ),
                 _DrawerItem(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Inventario',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const InsumosListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _DrawerItem(
                   icon: Icons.local_pizza,
                   title: 'Productos',
                   onTap: () {
@@ -575,7 +583,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _DrawerItem(
                   icon: Icons.category_outlined,
-                  title: 'Categorías',
+                  title: 'Recetas',
                   onTap: () {},
                 ),
                 _DrawerItem(
@@ -585,7 +593,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _DrawerItem(
                   icon: Icons.person_outline,
-                  title: 'Usuarios',
+                  title: 'Empleados',
                   onTap: () {},
                 ),
                 _DrawerItem(
@@ -601,19 +609,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     );
                   },
                 ),
-                _DrawerItem(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Insumos',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const InsumosListScreen(),
-                      ),
-                    );
-                  },
-                ),
+
                 _DrawerItem(
                   icon: Icons.assessment_outlined,
                   title: 'Reportes',
@@ -1178,7 +1174,7 @@ class _DrawerItem extends StatelessWidget {
     final color = isDestructive
         ? Colors.redAccent
         : isActive
-        ? const Color(0xFF3B82F6)
+        ? AppColors.secondary
         : Colors.white70;
 
     return ListTile(
@@ -1191,7 +1187,7 @@ class _DrawerItem extends StatelessWidget {
         ),
       ),
       selected: isActive,
-      selectedTileColor: const Color(0xFF3B82F6).withOpacity(0.1),
+      selectedTileColor: AppColors.secondary.withOpacity(0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
