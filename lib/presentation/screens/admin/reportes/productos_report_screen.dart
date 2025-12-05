@@ -61,8 +61,25 @@ class _ProductosReportScreenState extends State<ProductosReportScreen> {
     final dateFormat = DateFormat('dd/MM/yyyy');
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        title: const Text('Productos Más Vendidos'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Productos Más Vendidos',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white70),
+            onPressed: _loadReport,
+            tooltip: 'Refrescar',
+          ),
+        ],
       ),
       body: _isLoading
           ? const LoadingWidget(message: 'Generando reporte...')
@@ -71,20 +88,40 @@ class _ProductosReportScreenState extends State<ProductosReportScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.error),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.error,
+              ),
             ),
             const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _loadReport,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
+              ),
               child: const Text('Reintentar'),
             ),
           ],
@@ -92,43 +129,90 @@ class _ProductosReportScreenState extends State<ProductosReportScreen> {
       )
           : RefreshIndicator(
         onRefresh: _loadReport,
+        color: AppColors.secondary,
+        backgroundColor: const Color(0xFF2A2A2A),
         child: _topProductos.isEmpty
-            ? const Center(
-          child: Text('No hay datos de productos vendidos'),
+            ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.local_pizza_outlined,
+                size: 80,
+                color: Colors.white.withOpacity(0.3),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'No hay datos de productos vendidos',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
         )
             : ListView(
           padding: const EdgeInsets.all(16),
           children: [
             // Header
             Card(
-              color: AppColors.accent.withOpacity(0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+              color: const Color(0xFF1A1A1A),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: AppColors.accent.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.accent.withOpacity(0.1),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.local_pizza,
-                      color: AppColors.accent,
-                      size: 32,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.local_pizza,
+                        color: AppColors.accent,
+                        size: 32,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Periodo del Reporte',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.6),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             '${dateFormat.format(widget.fechaInicio)} - ${dateFormat.format(widget.fechaFin)}',
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                         ],
@@ -139,23 +223,40 @@ class _ProductosReportScreenState extends State<ProductosReportScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Top 3
-            if (_topProductos.isNotEmpty)
-              _buildTopThree(),
+            if (_topProductos.isNotEmpty) _buildTopThree(),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Lista completa
-            const Text(
-              'Ranking Completo',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.format_list_numbered,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Ranking Completo',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             ..._topProductos.asMap().entries.map((entry) {
               return _ProductoRankCard(
@@ -175,42 +276,61 @@ class _ProductosReportScreenState extends State<ProductosReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Top 3 Productos',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
         Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFD700).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.emoji_events,
+                color: Color(0xFFFFD700),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Top 3 Productos',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             // Segundo lugar
             Expanded(
               child: _TopCard(
                 ranking: 2,
                 producto: _topProductos[1],
-                height: 140,
-                color: Colors.grey.shade400,
+                height: 160,
+                color: const Color(0xFFC0C0C0),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             // Primer lugar
             Expanded(
               child: _TopCard(
                 ranking: 1,
                 producto: _topProductos[0],
-                height: 180,
+                height: 200,
                 color: const Color(0xFFFFD700),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             // Tercer lugar
             Expanded(
               child: _TopCard(
                 ranking: 3,
                 producto: _topProductos[2],
-                height: 120,
+                height: 140,
                 color: const Color(0xFFCD7F32),
               ),
             ),
@@ -242,22 +362,41 @@ class _TopCard extends StatelessWidget {
 
     return Card(
       elevation: 4,
+      color: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: color.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
       child: Container(
         height: height,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color,
+                gradient: LinearGradient(
+                  colors: [color, color.withOpacity(0.7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Text(
                 '#$ranking',
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -267,8 +406,9 @@ class _TopCard extends StatelessWidget {
               nombre,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -278,26 +418,33 @@ class _TopCard extends StatelessWidget {
                 Text(
                   '$cantidad',
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
                 ),
-                const Text(
+                Text(
                   'vendidos',
                   style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.5),
                   ),
                 ),
               ],
             ),
-            Text(
-              'Bs. ${total.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.success,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'Bs. ${total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.success,
+                ),
               ),
             ),
           ],
@@ -318,9 +465,16 @@ class _ProductoRankCard extends StatelessWidget {
 
   Color _getRankingColor() {
     if (ranking == 1) return const Color(0xFFFFD700);
-    if (ranking == 2) return Colors.grey.shade400;
+    if (ranking == 2) return const Color(0xFFC0C0C0);
     if (ranking == 3) return const Color(0xFFCD7F32);
     return AppColors.primary;
+  }
+
+  IconData _getRankingIcon() {
+    if (ranking == 1) return Icons.emoji_events;
+    if (ranking == 2) return Icons.workspace_premium;
+    if (ranking == 3) return Icons.military_tech;
+    return Icons.trending_up;
   }
 
   @override
@@ -331,51 +485,101 @@ class _ProductoRankCard extends StatelessWidget {
     final color = _getRankingColor();
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              '#$ranking',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: ranking <= 3 ? color : AppColors.primary,
-              ),
-            ),
-          ),
+      margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF1A1A1A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: ranking <= 3
+              ? color.withOpacity(0.3)
+              : Colors.white.withOpacity(0.05),
+          width: ranking <= 3 ? 2 : 1,
         ),
-        title: Text(
-          nombre,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text('$cantidad unidades vendidas'),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
-            Text(
-              'Bs. ${total.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.success,
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: ranking <= 3
+                    ? LinearGradient(
+                  colors: [color, color.withOpacity(0.7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+                    : null,
+                color: ranking > 3 ? AppColors.primary.withOpacity(0.1) : null,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _getRankingIcon(),
+                    color: ranking <= 3 ? Colors.white : AppColors.primary,
+                    size: 20,
+                  ),
+                  Text(
+                    '#$ranking',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: ranking <= 3 ? Colors.white : AppColors.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              (cantidad > 0 && total > 0)
-                  ? 'Bs. ${(total / cantidad).toStringAsFixed(2)} c/u'
-                  : 'Bs. 0.00 c/u',
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nombre,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$cantidad unidades vendidas',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.6),
+                    ),
+                  ),
+                ],
               ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Bs. ${total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.success,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  (cantidad > 0 && total > 0)
+                      ? 'Bs. ${(total / cantidad).toStringAsFixed(2)} c/u'
+                      : 'Bs. 0.00 c/u',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

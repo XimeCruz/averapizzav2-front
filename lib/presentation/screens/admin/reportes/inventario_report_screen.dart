@@ -33,12 +33,23 @@ class _InventarioReportScreenState extends State<InventarioReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        title: const Text('Estado de Inventario'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Estado de Inventario',
+          style: TextStyle(color: Colors.white),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white70),
             onPressed: _loadData,
+            tooltip: 'Refrescar',
           ),
         ],
       ),
@@ -50,6 +61,8 @@ class _InventarioReportScreenState extends State<InventarioReportScreen> {
 
           return RefreshIndicator(
             onRefresh: _loadData,
+            color: AppColors.secondary,
+            backgroundColor: const Color(0xFF2A2A2A),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
@@ -89,14 +102,32 @@ class _InventarioReportScreenState extends State<InventarioReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Resumen General',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.summarize,
+                color: AppColors.info,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Resumen General',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -150,28 +181,54 @@ class _InventarioReportScreenState extends State<InventarioReportScreen> {
       children: [
         Row(
           children: [
-            const Icon(Icons.warning_amber, color: AppColors.error),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.warning_amber,
+                color: AppColors.error,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
             const Text(
               'Alertas de Stock Bajo',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.error.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.error),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.error.withOpacity(0.3),
+              width: 2,
+            ),
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, color: AppColors.error),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.info_outline,
+                  color: AppColors.error,
+                  size: 20,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -179,6 +236,7 @@ class _InventarioReportScreenState extends State<InventarioReportScreen> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.error,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -201,21 +259,53 @@ class _InventarioReportScreenState extends State<InventarioReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Inventario Completo',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.inventory,
+                color: AppColors.success,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Inventario Completo',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         if (insumosOk.isEmpty)
-          const Card(
+          Card(
+            color: const Color(0xFF1A1A1A),
             child: Padding(
-              padding: EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(32.0),
               child: Center(
-                child: Text('Todos los insumos están bajo stock'),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.inventory_2_outlined,
+                      size: 48,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Todos los insumos están bajo stock',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
               ),
             ),
           )
@@ -244,7 +334,15 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color(0xFF1A1A1A),
       elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -256,16 +354,24 @@ class _StatCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: Colors.white.withOpacity(0.6),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
-                Icon(icon, color: color, size: 20),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               value,
               style: TextStyle(
@@ -291,25 +397,33 @@ class _InsumoAlertCard extends StatelessWidget {
     final porcentaje = insumo.porcentajeStock;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: AppColors.error.withOpacity(0.05),
+      margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF1A1A1A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: AppColors.error.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.error,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.warning,
                     color: Colors.white,
-                    size: 20,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -322,13 +436,15 @@ class _InsumoAlertCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
                         'Stock: ${insumo.stockActual} ${insumo.unidadMedida}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: Colors.white.withOpacity(0.6),
                         ),
                       ),
                     ],
@@ -340,7 +456,7 @@ class _InsumoAlertCard extends StatelessWidget {
                     Text(
                       '${porcentaje.toStringAsFixed(0)}%',
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppColors.error,
                       ),
@@ -349,29 +465,47 @@ class _InsumoAlertCard extends StatelessWidget {
                       'del mínimo',
                       style: TextStyle(
                         fontSize: 10,
-                        color: AppColors.error.withOpacity(0.7),
+                        color: Colors.white.withOpacity(0.5),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: porcentaje / 100,
                 minHeight: 8,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: const Color(0xFF2A2A2A),
                 color: AppColors.error,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Mínimo requerido: ${insumo.stockMinimo} ${insumo.unidadMedida}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Mínimo requerido: ${insumo.stockMinimo} ${insumo.unidadMedida}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -391,24 +525,33 @@ class _InsumoCard extends StatelessWidget {
     final porcentaje = insumo.porcentajeStock;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF1A1A1A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.success.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.check_circle,
                     color: AppColors.success,
-                    size: 20,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -421,13 +564,15 @@ class _InsumoCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
                         '${(insumo.stockActual).toStringAsFixed(2)} ${insumo.unidadMedida} disponibles',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: Colors.white.withOpacity(0.6),
                         ),
                       ),
                     ],
@@ -439,29 +584,29 @@ class _InsumoCard extends StatelessWidget {
                     Text(
                       '${porcentaje.toStringAsFixed(0)}%',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: AppColors.success,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'del mínimo',
                       style: TextStyle(
                         fontSize: 10,
-                        color: AppColors.textSecondary,
+                        color: Colors.white.withOpacity(0.5),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: porcentaje / 100 > 1 ? 1 : porcentaje / 100,
                 minHeight: 6,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: const Color(0xFF2A2A2A),
                 color: AppColors.success,
               ),
             ),
