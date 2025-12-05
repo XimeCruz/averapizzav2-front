@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../screens/admin/clientes/clientes_screen.dart';
 import '../screens/admin/recetas/receta_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
@@ -259,15 +260,22 @@ class _AdminLayoutState extends State<AdminLayout> {
                   title: 'Clientes',
                   isActive: widget.currentRoute == '/admin/clientes',
                   isExpanded: _isSidebarExpanded,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ClientesScreen(),
+                      ),
+                    );
+                  },
                 ),
-                _SidebarItem(
-                  icon: Icons.person_outline,
-                  title: 'Empleados',
-                  isActive: widget.currentRoute == '/admin/empleados',
-                  isExpanded: _isSidebarExpanded,
-                  onTap: () {},
-                ),
+                // _SidebarItem(
+                //   icon: Icons.person_outline,
+                //   title: 'Empleados',
+                //   isActive: widget.currentRoute == '/admin/empleados',
+                //   isExpanded: _isSidebarExpanded,
+                //   onTap: () {},
+                // ),
                 _SidebarItem(
                   icon: Icons.receipt_long_outlined,
                   title: 'Pedidos',

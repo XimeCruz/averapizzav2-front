@@ -11,6 +11,13 @@ class ApiConstants {
   static const String login = '$apiVersion/auth/login';
   static String register(String rol) => '$apiVersion/auth/register?rolNombre=$rol';
 
+  // ========== USUARIOS ENDPOINTS ==========
+  static const String usuarios = '$apiVersion/admin/usuarios';
+  static String usuarioById(int id) => '$apiVersion/admin/usuarios/$id';
+  static String toggleEstadoUsuario(int id) => '$apiVersion/admin/usuarios/$id/toggle-estado';
+  static String usuariosByRol(String rol) => '$apiVersion/admin/usuarios/rol/$rol';
+  static const String usuariosActivos = '$apiVersion/admin/usuarios/activos';
+
   // ========== PRODUCTOS ENDPOINTS ==========
   static const String productos = '$apiVersion/cliente/productos';
   static String productoById(int id) => '$apiVersion/cliente/productos/$id';
