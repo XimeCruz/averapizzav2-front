@@ -763,7 +763,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 _ModernStatCard(
                   title: 'Total Pedidos',
                   value: '${data.totalVentas}',
-                  subtitle: 'Todos los pedidos',
+                  // subtitle: 'Todos los pedidos',
                   icon: Icons.pending_actions,
                   color: const Color(0xFF3B82F6),
                   gradientColors: [
@@ -772,9 +772,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ],
                 ),
                 _ModernStatCard(
-                  title: 'Tasa de Éxito',
+                  title: 'Tasa de Entrega',
                   value: '${((data.totalVentas > 0 ? (data.totalVentas - data.pedidosPendientes) / data.totalVentas : 0) * 100).toStringAsFixed(1)}%',
-                  subtitle: 'Completadas + Entregadas',
+                  // subtitle: 'Completadas + Entregadas',
                   icon: Icons.trending_up,
                   color: const Color(0xFF10B981),
                   gradientColors: [
@@ -785,7 +785,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 _ModernStatCard(
                   title: 'Total Productos',
                   value: '1',
-                  subtitle: 'En catálogo',
+                  // subtitle: 'En catálogo',
                   icon: Icons.inventory_2_outlined,
                   color: const Color(0xFF8B5CF6),
                   gradientColors: [
@@ -796,7 +796,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 _ModernStatCard(
                   title: 'Alertas de Stock',
                   value: '${data.insumosBajoStock}',
-                  subtitle: '0 bajo, 0 agotado',
+                  // subtitle: '0 bajo, 0 agotado',
                   icon: Icons.warning_amber_rounded,
                   color: const Color(0xFFEF4444),
                   gradientColors: [
@@ -1199,7 +1199,7 @@ class _DrawerItem extends StatelessWidget {
 class _ModernStatCard extends StatelessWidget {
   final String title;
   final String value;
-  final String subtitle;
+  // final String subtitle;
   final IconData icon;
   final Color color;
   final List<Color> gradientColors;
@@ -1207,7 +1207,7 @@ class _ModernStatCard extends StatelessWidget {
   const _ModernStatCard({
     required this.title,
     required this.value,
-    required this.subtitle,
+    // required this.subtitle,
     required this.icon,
     required this.color,
     required this.gradientColors,
@@ -1280,13 +1280,13 @@ class _ModernStatCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withOpacity(0.4),
-                  ),
-                ),
+                // Text(
+                //   subtitle,
+                //   style: TextStyle(
+                //     fontSize: 11,
+                //     color: Colors.white.withOpacity(0.4),
+                //   ),
+                // ),
               ],
             ),
           ),
