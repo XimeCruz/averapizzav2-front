@@ -347,7 +347,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                                     _tieneSabores = value;
                                   });
                                 },
-                                activeColor: AppColors.secondary,
+                                activeThumbColor: AppColors.secondary,
                                 activeTrackColor: AppColors.secondary.withOpacity(0.5),
                                 inactiveThumbColor: Colors.white38,
                                 inactiveTrackColor: Colors.white12,

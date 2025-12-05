@@ -486,7 +486,7 @@ class _InsumoRowState extends State<_InsumoRow> {
                   child: Consumer<InsumoProvider>(
                     builder: (context, provider, _) {
                       return DropdownButtonFormField<int>(
-                        value: widget.item.insumoId,
+                        initialValue: widget.item.insumoId,
                         dropdownColor: const Color(0xFF2A2A2A),
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(

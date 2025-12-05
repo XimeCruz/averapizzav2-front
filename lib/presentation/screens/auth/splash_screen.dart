@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import 'login_screen.dart';
 import '../admin/admin_dashboard_screen.dart';

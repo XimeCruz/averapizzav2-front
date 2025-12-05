@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _rememberMe = false;
+  final bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         child: DropdownButtonFormField<String>(
-                          value: selectedRole,
+                          initialValue: selectedRole,
                           dropdownColor: Colors.white,
                           decoration: const InputDecoration(
                             border: InputBorder.none,

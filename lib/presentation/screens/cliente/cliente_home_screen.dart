@@ -16,7 +16,7 @@ class ClienteHomeScreen extends StatefulWidget {
 class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
   TipoProducto? _tipoSeleccionado;
   Producto? _productoSeleccionado;
-  List<_ItemCarrito> _carrito = [];
+  final List<_ItemCarrito> _carrito = [];
 
   @override
   void initState() {
@@ -454,7 +454,7 @@ class _VistaSeleccionPresentacionState
     extends State<_VistaSeleccionPresentacion> {
   PresentacionProducto? _presentacionSeleccionada;
   List<SaborPizza> _saboresDisponibles = [];
-  List<SaborPizza> _saboresSeleccionados = [];
+  final List<SaborPizza> _saboresSeleccionados = [];
   bool _isLoading = false;
 
   @override
@@ -467,7 +467,7 @@ class _VistaSeleccionPresentacionState
     setState(() => _isLoading = true);
     final provider = context.read<ProductoProvider>();
 
-    await provider.loadPresentacionesByProducto(widget.producto.id!);
+    await provider.loadPresentacionesByProducto(widget.producto.id);
 
     // if (widget.producto.tieneSabores) {
     //   // Cargar todos los sabores y filtrar por producto
@@ -480,7 +480,7 @@ class _VistaSeleccionPresentacionState
     // }
     if (widget.producto.tieneSabores) {
       // Cargar sabores filtrados por producto
-      await provider.loadSaboresByProducto(widget.producto.id!);
+      await provider.loadSaboresByProducto(widget.producto.id);
       setState(() {
         _saboresDisponibles = provider.sabores;
       });
@@ -545,7 +545,7 @@ class _VistaSeleccionPresentacionState
         : '${widget.producto.nombre} ${_presentacionSeleccionada!.tipo.name}';
 
     final item = _ItemCarrito(
-      productoId: widget.producto.id!,
+      productoId: widget.producto.id,
       presentacionId: _presentacionSeleccionada!.id,
       saboresIds: _saboresSeleccionados.map((s) => s.id).toList(),
       descripcion: descripcion,

@@ -238,7 +238,7 @@ class _PrecioDialogState extends State<PrecioDialog> {
                         }
 
                         return DropdownButtonFormField<PresentacionProducto>(
-                          value: _presentacionSeleccionada,
+                          initialValue: _presentacionSeleccionada,
                           dropdownColor: const Color(0xFF2A2A2A),
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(

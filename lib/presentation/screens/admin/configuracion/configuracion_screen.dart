@@ -633,7 +633,7 @@ class _SwitchTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.secondary,
+            activeThumbColor: AppColors.secondary,
             activeTrackColor: AppColors.secondary.withOpacity(0.5),
           ),
         ],

@@ -44,7 +44,6 @@ class _ReportesScreenState extends State<ReportesScreen> {
             data: ThemeData(
               brightness: Brightness.dark,
               scaffoldBackgroundColor: Colors.black,
-              dialogBackgroundColor: Colors.black,
               canvasColor: Colors.black,
               cardColor: Colors.black,
               colorScheme: const ColorScheme.dark(
@@ -52,8 +51,6 @@ class _ReportesScreenState extends State<ReportesScreen> {
                 onPrimary: Colors.white,
                 surface: Colors.black,
                 onSurface: Colors.white,
-                background: Colors.black,
-                onBackground: Colors.white,
                 primaryContainer: AppColors.secondary,
                 onPrimaryContainer: Colors.white,
               ),
@@ -68,7 +65,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.secondary,
                 ),
-              ),
+              ), dialogTheme: DialogThemeData(backgroundColor: Colors.black),
             ),
           child: child!,
         );
