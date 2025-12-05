@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../screens/admin/clientes/clientes_screen.dart';
+import '../screens/admin/configuracion/configuracion_screen.dart';
 import '../screens/admin/recetas/receta_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
@@ -295,7 +296,14 @@ class _AdminLayoutState extends State<AdminLayout> {
                   title: 'Configuración',
                   isActive: widget.currentRoute == '/admin/configuracion',
                   isExpanded: _isSidebarExpanded,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ConfiguracionScreen(),
+                      ),
+                    );
+                  },
                 ),
 
                 if (_isSidebarExpanded) const SizedBox(height: 16),
