@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../screens/admin/recetas/receta_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/admin/insumos/insumos_list_screen.dart';
@@ -244,7 +245,14 @@ class _AdminLayoutState extends State<AdminLayout> {
                   title: 'Recetas',
                   isActive: widget.currentRoute == '/admin/recetas',
                   isExpanded: _isSidebarExpanded,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RecetasScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _SidebarItem(
                   icon: Icons.people_outline,
