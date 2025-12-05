@@ -41,15 +41,35 @@ class _ReportesScreenState extends State<ReportesScreen> {
       initialDateRange: DateTimeRange(start: _fechaInicio, end: _fechaFin),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.secondary,
-              onPrimary: Colors.white,
-              surface: const Color(0xFF1A1A1A),
-              onSurface: Colors.black,
+            data: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: Colors.black,
+              dialogBackgroundColor: Colors.black,
+              canvasColor: Colors.black,
+              cardColor: Colors.black,
+              colorScheme: const ColorScheme.dark(
+                primary: AppColors.secondary,
+                onPrimary: Colors.white,
+                surface: Colors.black,
+                onSurface: Colors.white,
+                background: Colors.black,
+                onBackground: Colors.white,
+                primaryContainer: AppColors.secondary,
+                onPrimaryContainer: Colors.white,
+              ),
+              textTheme: const TextTheme(
+                headlineMedium: TextStyle(color: Colors.white),
+                titleMedium: TextStyle(color: Colors.white),
+                bodyLarge: TextStyle(color: Colors.white),
+                bodyMedium: TextStyle(color: Colors.white),
+                labelLarge: TextStyle(color: Colors.white),
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.secondary,
+                ),
+              ),
             ),
-            dialogBackgroundColor: const Color(0xFF000000),
-          ),
           child: child!,
         );
       },
