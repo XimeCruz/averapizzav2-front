@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/pedido_model.dart';
 import '../../providers/pedido_provider.dart';
 import '../../widgets/common/loading_widget.dart';
+import '../../layouts/admin_layout.dart';
 import 'pedido_detail_dialog.dart';
 
 class PedidosListScreen extends StatefulWidget {
@@ -20,9 +21,12 @@ class PedidosListScreen extends StatefulWidget {
 }
 
 class _PedidosListScreenState extends State<PedidosListScreen> {
+  EstadoPedido? _selectedEstado;
+
   @override
   void initState() {
     super.initState();
+    _selectedEstado = widget.estado;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPedidos();
     });
@@ -31,17 +35,17 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
   Future<void> _loadPedidos() async {
     final provider = context.read<PedidoProvider>();
 
-    if (widget.estado != null) {
-      await provider.loadPedidosByEstado(widget.estado!);
+    if (_selectedEstado != null) {
+      await provider.loadPedidosByEstado(_selectedEstado!);
     } else {
       await provider.loadPedidos();
     }
   }
 
   String _getTitleByEstado() {
-    if (widget.estado == null) return 'Todos los Pedidos';
+    if (_selectedEstado == null) return 'Todos los Pedidos';
 
-    switch (widget.estado!) {
+    switch (_selectedEstado!) {
       case EstadoPedido.PENDIENTE:
         return 'Pedidos Pendientes';
       case EstadoPedido.EN_PREPARACION:
@@ -56,9 +60,9 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
   }
 
   List<Pedido> _getPedidos(PedidoProvider provider) {
-    if (widget.estado == null) return provider.pedidos;
+    if (_selectedEstado == null) return provider.pedidos;
 
-    switch (widget.estado!) {
+    switch (_selectedEstado!) {
       case EstadoPedido.PENDIENTE:
         return provider.pedidosPendientes;
       case EstadoPedido.EN_PREPARACION:
@@ -66,7 +70,7 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
       case EstadoPedido.LISTO:
         return provider.pedidosListos;
       default:
-        return provider.pedidos.where((p) => p.estado == widget.estado).toList();
+        return provider.pedidos.where((p) => p.estado == _selectedEstado).toList();
     }
   }
 
@@ -83,8 +87,18 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar Entrega'),
-        content: const Text('¿Marcar este pedido como entregado?'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Confirmar Entrega',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          '¿Marcar este pedido como entregado?',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -92,6 +106,9 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+            ),
             child: const Text('Entregar'),
           ),
         ],
@@ -113,6 +130,10 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
               : provider.errorMessage ?? 'Error al entregar',
         ),
         backgroundColor: success ? AppColors.success : AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
 
@@ -123,8 +144,18 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar Cancelación'),
-        content: const Text('¿Estás seguro de cancelar este pedido?'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Confirmar Cancelación',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          '¿Estás seguro de cancelar este pedido?',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -156,6 +187,10 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
               : provider.errorMessage ?? 'Error al cancelar',
         ),
         backgroundColor: success ? AppColors.success : AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
 
@@ -164,53 +199,242 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_getTitleByEstado()),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadPedidos,
+    return AdminLayout(
+      title: 'Gestión de Pedidos',
+      currentRoute: '/admin/pedidos',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadPedidos,
+          tooltip: 'Refrescar',
+        ),
+      ],
+      child: Column(
+        children: [
+          // Filtros por estado
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: const Color(0xFF1A1A1A),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _EstadoChip(
+                    label: 'Todos',
+                    isSelected: _selectedEstado == null,
+                    count: context.watch<PedidoProvider>().pedidos.length,
+                    color: AppColors.info,
+                    onTap: () {
+                      setState(() {
+                        _selectedEstado = null;
+                      });
+                      _loadPedidos();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _EstadoChip(
+                    label: 'Pendientes',
+                    isSelected: _selectedEstado == EstadoPedido.PENDIENTE,
+                    count: context.watch<PedidoProvider>().pedidosPendientes.length,
+                    color: AppColors.warning,
+                    onTap: () {
+                      setState(() {
+                        _selectedEstado = EstadoPedido.PENDIENTE;
+                      });
+                      _loadPedidos();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _EstadoChip(
+                    label: 'En Preparación',
+                    isSelected: _selectedEstado == EstadoPedido.EN_PREPARACION,
+                    count: context.watch<PedidoProvider>().pedidosEnPreparacion.length,
+                    color: AppColors.accent,
+                    onTap: () {
+                      setState(() {
+                        _selectedEstado = EstadoPedido.EN_PREPARACION;
+                      });
+                      _loadPedidos();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _EstadoChip(
+                    label: 'Listos',
+                    isSelected: _selectedEstado == EstadoPedido.LISTO,
+                    count: context.watch<PedidoProvider>().pedidosListos.length,
+                    color: AppColors.primary,
+                    onTap: () {
+                      setState(() {
+                        _selectedEstado = EstadoPedido.LISTO;
+                      });
+                      _loadPedidos();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _EstadoChip(
+                    label: 'Entregados',
+                    isSelected: _selectedEstado == EstadoPedido.ENTREGADO,
+                    count: context.watch<PedidoProvider>().pedidos
+                        .where((p) => p.estado == EstadoPedido.ENTREGADO).length,
+                    color: AppColors.success,
+                    onTap: () {
+                      setState(() {
+                        _selectedEstado = EstadoPedido.ENTREGADO;
+                      });
+                      _loadPedidos();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _EstadoChip(
+                    label: 'Cancelados',
+                    isSelected: _selectedEstado == EstadoPedido.CANCELADO,
+                    count: context.watch<PedidoProvider>().pedidos
+                        .where((p) => p.estado == EstadoPedido.CANCELADO).length,
+                    color: AppColors.error,
+                    onTap: () {
+                      setState(() {
+                        _selectedEstado = EstadoPedido.CANCELADO;
+                      });
+                      _loadPedidos();
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
-      body: Consumer<PedidoProvider>(
-        builder: (context, provider, _) {
-          if (provider.status == PedidoStatus.loading) {
-            return const LoadingWidget(message: 'Cargando pedidos...');
-          }
 
-          final pedidos = _getPedidos(provider);
+          // Lista de pedidos
+          Expanded(
+            child: Consumer<PedidoProvider>(
+              builder: (context, provider, _) {
+                if (provider.status == PedidoStatus.loading) {
+                  return const LoadingWidget(message: 'Cargando pedidos...');
+                }
 
-          if (pedidos.isEmpty) {
-            return EmptyStateWidget(
-              icon: Icons.receipt_long,
-              message: 'No hay pedidos en este estado',
-            );
-          }
+                final pedidos = _getPedidos(provider);
 
-          return RefreshIndicator(
-            onRefresh: _loadPedidos,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: pedidos.length,
-              itemBuilder: (context, index) {
-                final pedido = pedidos[index];
-                return _PedidoCard(
-                  pedido: pedido,
-                  onTap: () => _showPedidoDetail(pedido),
-                  onEntregar: pedido.estado == EstadoPedido.LISTO
-                      ? () => _entregarPedido(pedido.id!)
-                      : null,
-                  onCancelar: pedido.estado != EstadoPedido.ENTREGADO &&
-                      pedido.estado != EstadoPedido.CANCELADO
-                      ? () => _cancelarPedido(pedido.id!)
-                      : null,
+                if (pedidos.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.receipt_long,
+                            size: 80,
+                            color: Colors.white.withOpacity(0.3),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'No hay pedidos en este estado',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: _loadPedidos,
+                  color: AppColors.secondary,
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: pedidos.length,
+                    itemBuilder: (context, index) {
+                      final pedido = pedidos[index];
+                      return _PedidoCard(
+                        pedido: pedido,
+                        onTap: () => _showPedidoDetail(pedido),
+                        onEntregar: pedido.estado == EstadoPedido.LISTO
+                            ? () => _entregarPedido(pedido.id!)
+                            : null,
+                        onCancelar: pedido.estado != EstadoPedido.ENTREGADO &&
+                            pedido.estado != EstadoPedido.CANCELADO
+                            ? () => _cancelarPedido(pedido.id!)
+                            : null,
+                      );
+                    },
+                  ),
                 );
               },
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EstadoChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final int count;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _EstadoChip({
+    required this.label,
+    required this.isSelected,
+    required this.count,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : Colors.white.withOpacity(0.1),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? color : Colors.white70,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: isSelected ? color : Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count.toString(),
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -251,6 +475,15 @@ class _PedidoCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF1A1A1A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -285,6 +518,7 @@ class _PedidoCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -294,8 +528,11 @@ class _PedidoCard extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: estadoColor.withOpacity(0.1),
+                                color: estadoColor.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: estadoColor.withOpacity(0.5),
+                                ),
                               ),
                               child: Text(
                                 pedido.getEstadoTexto(),
@@ -311,9 +548,9 @@ class _PedidoCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           pedido.getTipoServicioTexto(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: Colors.white.withOpacity(0.6),
                           ),
                         ),
                       ],
@@ -323,7 +560,7 @@ class _PedidoCard extends StatelessWidget {
               ),
 
               const SizedBox(height: 12),
-              const Divider(),
+              Divider(color: Colors.white.withOpacity(0.05)),
               const SizedBox(height: 8),
 
               Row(
@@ -332,11 +569,11 @@ class _PedidoCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Total',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: Colors.white.withOpacity(0.5),
                         ),
                       ),
                       Text(
@@ -352,11 +589,11 @@ class _PedidoCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
+                      Text(
                         'Fecha',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: Colors.white.withOpacity(0.5),
                         ),
                       ),
                       Text(
@@ -364,6 +601,7 @@ class _PedidoCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
+                          color: Colors.white70,
                         ),
                       ),
                     ],
@@ -373,11 +611,19 @@ class _PedidoCard extends StatelessWidget {
 
               if (pedido.detalles.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(
-                  '${pedido.detalles.length} producto(s)',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '${pedido.detalles.length} producto(s)',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.info,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -394,6 +640,10 @@ class _PedidoCard extends StatelessWidget {
                           label: const Text('Entregar'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.success,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),
@@ -407,6 +657,10 @@ class _PedidoCard extends StatelessWidget {
                           label: const Text('Cancelar'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.error,
+                            side: const BorderSide(color: AppColors.error),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),
