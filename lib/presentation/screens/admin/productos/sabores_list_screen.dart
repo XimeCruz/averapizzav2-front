@@ -37,8 +37,18 @@ class _SaboresListScreenState extends State<SaboresListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar Eliminación'),
-        content: Text('¿Estás seguro de eliminar el sabor "$nombre"?\n\nEsto también eliminará su receta y precios asociados.'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Confirmar Eliminación',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          '¿Estás seguro de eliminar el sabor "$nombre"?\n\nEsto también eliminará su receta y precios asociados.',
+          style: const TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -79,24 +89,36 @@ class _SaboresListScreenState extends State<SaboresListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Sabores'),
+            const Text(
+              'Sabores',
+              style: TextStyle(color: Colors.white),
+            ),
             Text(
               widget.producto.nombre,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.normal,
+                color: Colors.white.withOpacity(0.6),
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white70),
             onPressed: _loadSabores,
+            tooltip: 'Refrescar',
           ),
         ],
       ),
@@ -113,20 +135,23 @@ class _SaboresListScreenState extends State<SaboresListScreen> {
         },
         icon: const Icon(Icons.add),
         label: const Text('Nuevo Sabor'),
+        backgroundColor: AppColors.secondary,
       ),
       body: Column(
         children: [
           // Barra de búsqueda
           Container(
             padding: const EdgeInsets.all(16),
-            color: AppColors.surface,
+            color: const Color(0xFF1A1A1A),
             child: TextField(
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Buscar sabor...',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.5)),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.clear),
+                  icon: const Icon(Icons.clear, color: Colors.white54),
                   onPressed: () {
                     setState(() {
                       _searchQuery = '';
@@ -134,6 +159,23 @@ class _SaboresListScreenState extends State<SaboresListScreen> {
                   },
                 )
                     : null,
+                filled: true,
+                fillColor: const Color(0xFF2A2A2A),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.secondary,
+                    width: 2,
+                  ),
+                ),
               ),
               onChanged: (value) {
                 setState(() {
@@ -184,6 +226,8 @@ class _SaboresListScreenState extends State<SaboresListScreen> {
 
                 return RefreshIndicator(
                   onRefresh: _loadSabores,
+                  color: AppColors.secondary,
+                  backgroundColor: const Color(0xFF2A2A2A),
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: sabores.length,
@@ -245,6 +289,15 @@ class _SaborCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF1A1A1A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -277,15 +330,16 @@ class _SaborCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                         if (sabor.descripcion != null) ...[
                           const SizedBox(height: 4),
                           Text(
                             sabor.descripcion!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: Colors.white.withOpacity(0.6),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -295,7 +349,8 @@ class _SaborCard extends StatelessWidget {
                     ),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
+                    icon: const Icon(Icons.more_vert, color: Colors.white70),
+                    color: const Color(0xFF2A2A2A),
                     onSelected: (value) {
                       switch (value) {
                         case 'view':
@@ -314,9 +369,9 @@ class _SaborCard extends StatelessWidget {
                         value: 'view',
                         child: Row(
                           children: [
-                            Icon(Icons.visibility, size: 20),
+                            Icon(Icons.visibility, size: 20, color: Colors.white70),
                             SizedBox(width: 8),
-                            Text('Ver Detalles'),
+                            Text('Ver Detalles', style: TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
@@ -324,9 +379,9 @@ class _SaborCard extends StatelessWidget {
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, size: 20),
+                            Icon(Icons.edit, size: 20, color: Colors.white70),
                             SizedBox(width: 8),
-                            Text('Editar'),
+                            Text('Editar', style: TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
@@ -346,38 +401,119 @@ class _SaborCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.2),
+              InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.3),
+                    ),
                   ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.touch_app,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Toca para ver precios y receta',
-                      style: TextStyle(
-                        fontSize: 13,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.touch_app,
+                        size: 18,
                         color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 8),
+                      Text(
+                        'Toca para ver precios y receta',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Widget para estado vacío
+class EmptyStateWidget extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const EmptyStateWidget({
+    super.key,
+    required this.icon,
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 64,
+              color: Colors.white.withOpacity(0.3),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Comienza agregando uno nuevo',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: onAction,
+            icon: const Icon(Icons.add),
+            label: Text(actionLabel),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

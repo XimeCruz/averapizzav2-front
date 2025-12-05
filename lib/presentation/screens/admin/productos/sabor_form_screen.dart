@@ -90,16 +90,27 @@ class _SaborFormScreenState extends State<SaborFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isEditing ? 'Editar Sabor' : 'Nuevo Sabor'),
+            Text(
+              isEditing ? 'Editar Sabor' : 'Nuevo Sabor',
+              style: const TextStyle(color: Colors.white),
+            ),
             Text(
               widget.producto.nombre,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.normal,
+                color: Colors.white.withOpacity(0.6),
               ),
             ),
           ],
@@ -110,28 +121,94 @@ class _SaborFormScreenState extends State<SaborFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Card principal
             Card(
+              color: const Color(0xFF1A1A1A),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Colors.white.withOpacity(0.05),
+                  width: 1,
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Información del Sabor',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    // Encabezado
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.restaurant_menu,
+                            color: AppColors.accent,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          'Información del Sabor',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
                     // Nombre
                     TextFormField(
                       controller: _nombreController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre del Sabor *',
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Nombre del Sabor',
+                        labelStyle: const TextStyle(color: Colors.white70),
                         hintText: 'Ej: Jamón',
-                        prefixIcon: Icon(Icons.restaurant_menu),
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                        prefixIcon: const Icon(Icons.restaurant_menu, color: Colors.white54),
+                        filled: true,
+                        fillColor: const Color(0xFF2A2A2A),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.white.withOpacity(0.05),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.secondary,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
                       ),
                       textCapitalization: TextCapitalization.words,
                       validator: (value) {
@@ -142,43 +219,79 @@ class _SaborFormScreenState extends State<SaborFormScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
                     // Descripción
                     TextFormField(
                       controller: _descripcionController,
-                      decoration: const InputDecoration(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
                         labelText: 'Descripción (Opcional)',
-                        hintText: 'Ej: con jamón fresco',
-                        prefixIcon: Icon(Icons.notes),
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        hintText: 'Ej: con jamón fresco y queso mozzarella',
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                        prefixIcon: const Icon(Icons.notes, color: Colors.white54),
+                        filled: true,
+                        fillColor: const Color(0xFF2A2A2A),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.white.withOpacity(0.05),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.secondary,
+                            width: 2,
+                          ),
+                        ),
+                        alignLabelWithHint: true,
                       ),
                       maxLines: 3,
                       textCapitalization: TextCapitalization.sentences,
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
                     // Info
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppColors.info.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.info.withOpacity(0.3),
+                          width: 1,
+                        ),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 20,
-                            color: AppColors.info,
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.info.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: AppColors.info,
+                            ),
                           ),
-                          SizedBox(width: 8),
-                          Expanded(
+                          const SizedBox(width: 12),
+                          const Expanded(
                             child: Text(
                               'Después de crear el sabor, podrás configurar sus precios y receta.',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.info,
+                                height: 1.4,
                               ),
                             ),
                           ),
@@ -198,6 +311,16 @@ class _SaborFormScreenState extends State<SaborFormScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: BorderSide(
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: const Text('Cancelar'),
                   ),
                 ),
@@ -210,6 +333,15 @@ class _SaborFormScreenState extends State<SaborFormScreen> {
 
                       return ElevatedButton(
                         onPressed: isLoading ? null : _saveSabor,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
                         child: isLoading
                             ? const SizedBox(
                           height: 20,
@@ -219,13 +351,31 @@ class _SaborFormScreenState extends State<SaborFormScreen> {
                             color: Colors.white,
                           ),
                         )
-                            : Text(isEditing ? 'Actualizar' : 'Guardar'),
+                            : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isEditing ? Icons.check : Icons.add,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isEditing ? 'Actualizar' : 'Guardar',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
                 ),
               ],
             ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),

@@ -168,6 +168,17 @@ class _InsumosListScreenState extends State<InsumosListScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.secondary,
+                        width: 2,
+                      ),
+                    ),
                   ),
                   onChanged: (value) {
                     setState(() {

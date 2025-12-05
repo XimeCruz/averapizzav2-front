@@ -6,7 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/producto_model.dart';
 import '../../../providers/producto_provider.dart';
 import '../../../widgets/common/loading_widget.dart';
-import '../../../widgets/common/empty_state_widget.dart';
+import '../../../layouts/admin_layout.dart';
 import 'producto_form_screen.dart';
 import 'sabores_list_screen.dart';
 
@@ -77,16 +77,9 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gestión de Productos'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadProductos,
-          ),
-        ],
-      ),
+    return AdminLayout(
+      title: 'Gestión de Productos',
+      currentRoute: '/admin/productos',
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
@@ -100,20 +93,30 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
         },
         icon: const Icon(Icons.add),
         label: const Text('Nuevo Producto'),
+        backgroundColor: AppColors.secondary,
       ),
-      body: Column(
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadProductos,
+          tooltip: 'Refrescar',
+        ),
+      ],
+      child: Column(
         children: [
           // Barra de búsqueda
           Container(
             padding: const EdgeInsets.all(16),
-            color: AppColors.surface,
+            color: const Color(0xFF1A1A1A),
             child: TextField(
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Buscar producto...',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.5)),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.clear),
+                  icon: const Icon(Icons.clear, color: Colors.white54),
                   onPressed: () {
                     setState(() {
                       _searchQuery = '';
@@ -121,6 +124,23 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
                   },
                 )
                     : null,
+                filled: true,
+                fillColor: const Color(0xFF2A2A2A),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.secondary,
+                    width: 2,
+                  ),
+                ),
               ),
               onChanged: (value) {
                 setState(() {
@@ -151,11 +171,15 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
                         const SizedBox(height: 16),
                         Text(
                           provider.errorMessage ?? 'Error al cargar productos',
+                          style: const TextStyle(color: Colors.white70),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadProductos,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.secondary,
+                          ),
                           child: const Text('Reintentar'),
                         ),
                       ],
@@ -196,6 +220,8 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
 
                 return RefreshIndicator(
                   onRefresh: _loadProductos,
+                  color: AppColors.secondary,
+                  backgroundColor: const Color(0xFF2A2A2A),
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: productos.length,
@@ -276,6 +302,15 @@ class _ProductoCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF1A1A1A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: producto.tieneSabores ? onViewSabores : onEdit,
         borderRadius: BorderRadius.circular(12),
@@ -308,6 +343,7 @@ class _ProductoCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -369,7 +405,8 @@ class _ProductoCard extends StatelessWidget {
                     ),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
+                    icon: const Icon(Icons.more_vert, color: Colors.white70),
+                    color: const Color(0xFF2A2A2A),
                     onSelected: (value) {
                       switch (value) {
                         case 'edit':
@@ -388,9 +425,9 @@ class _ProductoCard extends StatelessWidget {
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, size: 20),
+                            Icon(Icons.edit, size: 20, color: Colors.white70),
                             SizedBox(width: 8),
-                            Text('Editar'),
+                            Text('Editar', style: TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
@@ -399,9 +436,9 @@ class _ProductoCard extends StatelessWidget {
                           value: 'sabores',
                           child: Row(
                             children: [
-                              Icon(Icons.restaurant_menu, size: 20),
+                              Icon(Icons.restaurant_menu, size: 20, color: Colors.white70),
                               SizedBox(width: 8),
-                              Text('Ver Sabores'),
+                              Text('Ver Sabores', style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -410,9 +447,9 @@ class _ProductoCard extends StatelessWidget {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete, size: 20, color: AppColors.error),
+                            Icon(Icons.delete, size: 20, color: AppColors.secondary),
                             SizedBox(width: 8),
-                            Text('Eliminar', style: TextStyle(color: AppColors.error)),
+                            Text('Eliminar', style: TextStyle(color: AppColors.secondary)),
                           ],
                         ),
                       ),
@@ -427,10 +464,10 @@ class _ProductoCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.05),
+                      color: AppColors.secondary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.2),
+                        color: AppColors.secondary.withOpacity(0.3),
                       ),
                     ),
                     child: const Row(
@@ -439,13 +476,13 @@ class _ProductoCard extends StatelessWidget {
                         Icon(
                           Icons.restaurant_menu,
                           size: 20,
-                          color: AppColors.primary,
+                          color: AppColors.secondary,
                         ),
                         SizedBox(width: 8),
                         Text(
                           'Gestionar Sabores',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: AppColors.secondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -453,7 +490,7 @@ class _ProductoCard extends StatelessWidget {
                         Icon(
                           Icons.arrow_forward_ios,
                           size: 16,
-                          color: AppColors.primary,
+                          color: AppColors.secondary,
                         ),
                       ],
                     ),
@@ -463,6 +500,60 @@ class _ProductoCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Widget para estado vacío
+class EmptyStateWidget extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const EmptyStateWidget({
+    super.key,
+    required this.icon,
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 80,
+            color: Colors.white24,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onAction,
+            icon: const Icon(Icons.add),
+            label: Text(actionLabel),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondary,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

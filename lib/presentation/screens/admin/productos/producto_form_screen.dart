@@ -93,39 +93,126 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     }
   }
 
+  Color _getColorByTipo(TipoProducto tipo) {
+    switch (tipo) {
+      case TipoProducto.PIZZA:
+        return AppColors.primary;
+      case TipoProducto.BEBIDA:
+        return AppColors.info;
+      case TipoProducto.OTRO:
+        return AppColors.secondary;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        title: Text(isEditing ? 'Editar Producto' : 'Nuevo Producto'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          isEditing ? 'Editar Producto' : 'Nuevo Producto',
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Card principal
             Card(
+              color: const Color(0xFF1A1A1A),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Colors.white.withOpacity(0.05),
+                  width: 1,
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Información del Producto',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    // Encabezado
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.edit_note,
+                            color: AppColors.secondary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          'Información del Producto',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
                     // Nombre
                     TextFormField(
                       controller: _nombreController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre del Producto *',
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Nombre del Producto',
+                        labelStyle: const TextStyle(color: Colors.white70),
                         hintText: 'Ej: Pizza artesanal',
-                        prefixIcon: Icon(Icons.label),
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                        prefixIcon: const Icon(Icons.label, color: Colors.white54),
+                        filled: true,
+                        fillColor: const Color(0xFF2A2A2A),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.white.withOpacity(0.05),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.secondary,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -135,112 +222,175 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Tipo de Producto
                     const Text(
-                      'Tipo de Producto *',
+                      'Tipo de Producto',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
                     Wrap(
                       spacing: 12,
+                      runSpacing: 12,
                       children: TipoProducto.values.map((tipo) {
                         final isSelected = _tipoProducto == tipo;
-                        return ChoiceChip(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _getIconByTipo(tipo),
-                                size: 18,
-                                color: isSelected ? Colors.white : null,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(tipo.name),
-                            ],
-                          ),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() {
-                                _tipoProducto = tipo;
-                                // Pizza siempre tiene sabores
-                                if (tipo == TipoProducto.PIZZA) {
-                                  _tieneSabores = true;
-                                }
-                              });
-                            }
+                        final color = _getColorByTipo(tipo);
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _tipoProducto = tipo;
+                              // Pizza siempre tiene sabores
+                              if (tipo == TipoProducto.PIZZA) {
+                                _tieneSabores = true;
+                              }
+                            });
                           },
-                          selectedColor: AppColors.primary,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : null,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? color.withOpacity(0.15)
+                                  : const Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? color
+                                    : Colors.white.withOpacity(0.05),
+                                width: isSelected ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getIconByTipo(tipo),
+                                  size: 20,
+                                  color: isSelected ? color : Colors.white60,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  tipo.name,
+                                  style: TextStyle(
+                                    color: isSelected ? color : Colors.white70,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }).toList(),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // ¿Tiene sabores?
-                    SwitchListTile(
-                      title: const Text(
-                        '¿Tiene sabores?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                          width: 1,
                         ),
                       ),
-                      subtitle: Text(
-                        _tieneSabores
-                            ? 'Este producto podrá tener múltiples sabores'
-                            : 'Este producto no tendrá sabores',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      value: _tieneSabores,
-                      onChanged: _tipoProducto == TipoProducto.PIZZA
-                          ? null // Pizza siempre tiene sabores
-                          : (value) {
-                        setState(() {
-                          _tieneSabores = value;
-                        });
-                      },
-                      activeColor: AppColors.primary,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-
-                    if (_tipoProducto == TipoProducto.PIZZA) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.info.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 20,
-                              color: AppColors.info,
-                            ),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Las pizzas siempre tienen sabores',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.info,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '¿Tiene sabores?',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tieneSabores
+                                          ? 'Este producto podrá tener múltiples sabores'
+                                          : 'Este producto no tendrá sabores',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.5),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              Switch(
+                                value: _tieneSabores,
+                                onChanged: _tipoProducto == TipoProducto.PIZZA
+                                    ? null // Pizza siempre tiene sabores
+                                    : (value) {
+                                  setState(() {
+                                    _tieneSabores = value;
+                                  });
+                                },
+                                activeColor: AppColors.secondary,
+                                activeTrackColor: AppColors.secondary.withOpacity(0.5),
+                                inactiveThumbColor: Colors.white38,
+                                inactiveTrackColor: Colors.white12,
+                              ),
+                            ],
+                          ),
+
+                          if (_tipoProducto == TipoProducto.PIZZA) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.info.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.info.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 18,
+                                    color: AppColors.info,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Las pizzas siempre tienen sabores',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.info,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -254,6 +404,16 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: BorderSide(
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: const Text('Cancelar'),
                   ),
                 ),
@@ -266,6 +426,15 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
 
                       return ElevatedButton(
                         onPressed: isLoading ? null : _saveProducto,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
                         child: isLoading
                             ? const SizedBox(
                           height: 20,
@@ -275,13 +444,31 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                             color: Colors.white,
                           ),
                         )
-                            : Text(isEditing ? 'Actualizar' : 'Guardar'),
+                            : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isEditing ? Icons.check : Icons.add,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isEditing ? 'Actualizar' : 'Guardar',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
                 ),
               ],
             ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
