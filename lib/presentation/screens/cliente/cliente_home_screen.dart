@@ -488,7 +488,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
             alignment: WrapAlignment.center,
             children: [
               _FooterLink(icon: Icons.phone, text: '(591) 64042577'),
-              _FooterLink(icon: Icons.email, text: 'info@averapizza.com'),
+              _FooterLink(icon: Icons.photo_camera_outlined, text: 'A_Vera_Pizza'),
               _FooterLink(icon: Icons.location_on, text: 'Av. Hernando Siles N° 4758 entre la 1 y 2 de obrajes'),
             ],
           ),
