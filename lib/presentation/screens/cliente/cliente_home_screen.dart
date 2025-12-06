@@ -1,10 +1,10 @@
+// lib/presentation/screens/cliente/cliente_home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/models/producto_model.dart';
+import '../../layouts/cliente_layout.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/producto_provider.dart';
-import '../auth/login_screen.dart';
 
 class ClienteHomeScreen extends StatefulWidget {
   const ClienteHomeScreen({super.key});
@@ -14,216 +14,538 @@ class ClienteHomeScreen extends StatefulWidget {
 }
 
 class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
-  TipoProducto? _tipoSeleccionado;
-  Producto? _productoSeleccionado;
-  final List<_ItemCarrito> _carrito = [];
+  final PageController _bannerController = PageController();
+  int _currentBannerIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _cargarProductos();
+    _startAutoSlide();
   }
 
-  Future<void> _cargarProductos() async {
-    await context.read<ProductoProvider>().loadProductos();
-  }
+  void _startAutoSlide() {
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
 
-  void _seleccionarTipo(TipoProducto tipo) {
-    setState(() {
-      _tipoSeleccionado = tipo;
-      _productoSeleccionado = null;
+      if (_currentBannerIndex < 2) {
+        _currentBannerIndex++;
+      } else {
+        _currentBannerIndex = 0;
+      }
+
+      _bannerController.animateToPage(
+        _currentBannerIndex,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+
+      _startAutoSlide();
     });
-  }
-
-  void _seleccionarProducto(Producto producto) {
-    setState(() {
-      _productoSeleccionado = producto;
-    });
-  }
-
-  void _volverAlMenu() {
-    setState(() {
-      _tipoSeleccionado = null;
-      _productoSeleccionado = null;
-    });
-  }
-
-  void _agregarAlCarrito(_ItemCarrito item) {
-    setState(() {
-      _carrito.add(item);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${item.descripcion} agregado al carrito'),
-        backgroundColor: AppColors.success,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _verCarrito() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => _CarritoSheet(
-        items: _carrito,
-        onEliminar: (index) {
-          setState(() {
-            _carrito.removeAt(index);
-          });
-          Navigator.pop(context);
-          if (_carrito.isNotEmpty) {
-            _verCarrito();
-          }
-        },
-        onConfirmar: () {
-          // TODO: Crear pedido
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Pedido creado exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          setState(() {
-            _carrito.clear();
-          });
-          Navigator.pop(context);
-        },
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width > 1024;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('A Vera Pizza Italia'),
-        leading: _tipoSeleccionado != null || _productoSeleccionado != null
-            ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _volverAlMenu,
-        )
-            : null,
-        actions: [
-          Stack(
+    return ClienteLayout(
+      title: 'A Vera Pizza',
+      currentRoute: '/cliente/home',
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await Future.delayed(const Duration(seconds: 1));
+        },
+        backgroundColor: const Color(0xFF1A1A1A),
+        color: AppColors.secondary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                icon: const Icon(Icons.shopping_cart),
-                onPressed: _carrito.isEmpty ? null : _verCarrito,
-              ),
-              if (_carrito.isNotEmpty)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${_carrito.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+              // Banner de promociones
+              _buildPromotionBanner(),
+
+              // Saludo y búsqueda
+              Padding(
+                padding: EdgeInsets.all(isDesktop ? 32 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGreeting(authProvider),
+                    const SizedBox(height: 24),
+                    _buildSearchBar(),
+                  ],
                 ),
+              ),
+
+              // Categorías principales
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Nuestras Pizzas'),
+                    const SizedBox(height: 16),
+                    _buildCategoriesGrid(isDesktop),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Bebidas
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Bebidas'),
+                    const SizedBox(height: 16),
+                    _buildBebidasSection(isDesktop),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Promociones especiales
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Promociones Especiales'),
+                    const SizedBox(height: 16),
+                    _buildPromocionesCards(isDesktop),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              // Footer
+              _buildFooter(),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Center(
-              child: Text(
-                'Hola, ${authProvider.userName ?? "Cliente"}',
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authProvider.logout();
-              if (!context.mounted) return;
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: _productoSeleccionado != null
-          ? _VistaSeleccionPresentacion(
-        producto: _productoSeleccionado!,
-        onAgregar: _agregarAlCarrito,
-      )
-          : _tipoSeleccionado != null
-          ? _VistaProductosPorTipo(
-        tipo: _tipoSeleccionado!,
-        onSeleccionar: _seleccionarProducto,
-      )
-          : _VistaMenuPrincipal(
-        onSeleccionar: _seleccionarTipo,
+        ),
       ),
     );
   }
-}
 
-// ========== VISTA MENÚ PRINCIPAL ==========
-class _VistaMenuPrincipal extends StatelessWidget {
-  final Function(TipoProducto) onSeleccionar;
-
-  const _VistaMenuPrincipal({required this.onSeleccionar});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPromotionBanner() {
+    return Container(
+      height: 280,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A1A1A),
+      ),
+      child: Stack(
         children: [
+          PageView(
+            controller: _bannerController,
+            onPageChanged: (index) {
+              setState(() => _currentBannerIndex = index);
+            },
+            children: [
+              _BannerItem(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF6B35), Color(0xFFF7931E)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                title: '2x1 en Pizzas',
+                subtitle: 'Todos los martes',
+                emoji: '🍕',
+              ),
+              _BannerItem(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00B4D8), Color(0xFF0077B6)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                title: 'Envío Gratis',
+                subtitle: 'En compras mayores a \$50',
+                emoji: '🚚',
+              ),
+              _BannerItem(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7209B7), Color(0xFFB5179E)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                title: '20% OFF',
+                subtitle: 'En tu primer pedido',
+                emoji: '🎉',
+              ),
+            ],
+          ),
+
+          // Indicadores
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (index) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentBannerIndex == index ? 32 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentBannerIndex == index
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGreeting(AuthProvider authProvider) {
+    final hour = DateTime.now().hour;
+    String greeting;
+
+    if (hour < 12) {
+      greeting = 'Buenos días';
+    } else if (hour < 18) {
+      greeting = 'Buenas tardes';
+    } else {
+      greeting = 'Buenas noches';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$greeting, ${authProvider.userName ?? 'Cliente'}! 👋',
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '¿Qué pizza te apetece hoy?',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.white.withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: TextField(
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: 'Buscar pizzas, bebidas...',
+          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+          prefixIcon: const Icon(Icons.search, color: Colors.white60),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 24,
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoriesGrid(bool isDesktop) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: isDesktop ? 3 : 1,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: isDesktop ? 1.2 : 2.5,
+      children: [
+        _CategoryCard(
+          title: 'Pizza por Peso',
+          subtitle: 'Ideal para compartir',
+          emoji: '⚖️',
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF6B35), Color(0xFFF7931E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          onTap: () {},
+        ),
+        _CategoryCard(
+          title: 'Pizza Redonda',
+          subtitle: 'Clásica y deliciosa',
+          emoji: '🍕',
+          gradient: const LinearGradient(
+            colors: [Color(0xFFE63946), Color(0xFFD62828)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          onTap: () {},
+        ),
+        _CategoryCard(
+          title: 'Pizza en Bandeja',
+          subtitle: 'Para toda la familia',
+          emoji: '📦',
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF77F00), Color(0xFFD62828)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          onTap: () {},
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBebidasSection(bool isDesktop) {
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0096C7), Color(0xFF023E8A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0096C7).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        '🥤',
+                        style: TextStyle(fontSize: 48),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Bebidas Frías',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Acompaña tu pizza',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPromocionesCards(bool isDesktop) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: isDesktop ? 2 : 1,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: isDesktop ? 2.2 : 2.5,
+      children: [
+        _PromoCard(
+          title: 'Combo Familiar',
+          description: '2 Pizzas grandes + 2 Bebidas 1.5L',
+          price: '\$45.00',
+          discount: '15% OFF',
+          color: const Color(0xFF06D6A0),
+        ),
+        _PromoCard(
+          title: 'Duo Perfecto',
+          description: '1 Pizza mediana + 2 Bebidas 500ml',
+          price: '\$28.00',
+          discount: '10% OFF',
+          color: const Color(0xFFEF476F),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A1A1A),
+        border: Border(
+          top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.local_pizza, color: AppColors.secondary, size: 32),
+              const SizedBox(width: 12),
+              Text(
+                'A Vera Pizza',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Text(
-            '¿Qué te gustaría pedir?',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+            'Las mejores pizzas de la ciudad',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.6),
             ),
           ),
           const SizedBox(height: 24),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+          Wrap(
+            spacing: 24,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: [
+              _FooterLink(icon: Icons.phone, text: '(123) 456-7890'),
+              _FooterLink(icon: Icons.email, text: 'info@averapizza.com'),
+              _FooterLink(icon: Icons.location_on, text: 'Av. Principal 123'),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            '© 2025 A Vera Pizza. Todos los derechos reservados.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _bannerController.dispose();
+    super.dispose();
+  }
+}
+
+// WIDGETS
+class _BannerItem extends StatelessWidget {
+  final Gradient gradient;
+  final String title;
+  final String subtitle;
+  final String emoji;
+
+  const _BannerItem({
+    required this.gradient,
+    required this.title,
+    required this.subtitle,
+    required this.emoji,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(gradient: gradient),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -50,
+            top: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _TipoProductoCard(
-                  tipo: TipoProducto.PIZZA,
-                  titulo: 'Pizzas',
-                  icono: Icons.local_pizza,
-                  color: AppColors.primary,
-                  onTap: () => onSeleccionar(TipoProducto.PIZZA),
+                Text(emoji, style: const TextStyle(fontSize: 64)),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-                _TipoProductoCard(
-                  tipo: TipoProducto.BEBIDA,
-                  titulo: 'Bebidas',
-                  icono: Icons.local_drink,
-                  color: Colors.blue,
-                  onTap: () => onSeleccionar(TipoProducto.BEBIDA),
-                ),
-                _TipoProductoCard(
-                  tipo: TipoProducto.OTRO,
-                  titulo: 'Otros',
-                  icono: Icons.restaurant,
-                  color: Colors.orange,
-                  onTap: () => onSeleccionar(TipoProducto.OTRO),
+                const SizedBox(height: 8),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 18, color: Colors.white.withOpacity(0.9)),
                 ),
               ],
             ),
@@ -234,56 +556,73 @@ class _VistaMenuPrincipal extends StatelessWidget {
   }
 }
 
-class _TipoProductoCard extends StatelessWidget {
-  final TipoProducto tipo;
-  final String titulo;
-  final IconData icono;
-  final Color color;
+class _CategoryCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String emoji;
+  final Gradient gradient;
   final VoidCallback onTap;
 
-  const _TipoProductoCard({
-    required this.tipo,
-    required this.titulo,
-    required this.icono,
-    required this.color,
+  const _CategoryCard({
+    required this.title,
+    required this.subtitle,
+    required this.emoji,
+    required this.gradient,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 56)),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 24),
               ],
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icono, size: 64, color: color),
-              const SizedBox(height: 16),
-              Text(
-                titulo,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -291,544 +630,133 @@ class _TipoProductoCard extends StatelessWidget {
   }
 }
 
-// ========== VISTA PRODUCTOS POR TIPO ==========
-class _VistaProductosPorTipo extends StatelessWidget {
-  final TipoProducto tipo;
-  final Function(Producto) onSeleccionar;
+class _PromoCard extends StatelessWidget {
+  final String title;
+  final String description;
+  final String price;
+  final String discount;
+  final Color color;
 
-  const _VistaProductosPorTipo({
-    required this.tipo,
-    required this.onSeleccionar,
+  const _PromoCard({
+    required this.title,
+    required this.description,
+    required this.price,
+    required this.discount,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProductoProvider>(
-      builder: (context, provider, _) {
-        if (provider.status == ProductoStatus.loading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final productos = provider.productos
-            .where((p) => p.tipoProducto == tipo)
-            .toList();
-
-        if (productos.isEmpty) {
-          return Center(
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                Text(
-                  'No hay ${tipo.name.toLowerCase()}s disponibles',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: productos.length,
-          itemBuilder: (context, index) {
-            final producto = productos[index];
-            return _ProductoCard(
-              producto: producto,
-              onTap: () => onSeleccionar(producto),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _ProductoCard extends StatelessWidget {
-  final Producto producto;
-  final VoidCallback onTap;
-
-  const _ProductoCard({
-    required this.producto,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _getColorByTipo(producto.tipoProducto).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _getIconByTipo(producto.tipoProducto),
-                  size: 40,
-                  color: _getColorByTipo(producto.tipoProducto),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      producto.nombre,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            description,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      producto.tieneSabores
-                          ? 'Varios sabores disponibles'
-                          : 'Producto único',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        discount,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const Icon(Icons.arrow_forward_ios, size: 16),
-            ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      price,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Ordenar'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  Color _getColorByTipo(TipoProducto tipo) {
-    switch (tipo) {
-      case TipoProducto.PIZZA:
-        return AppColors.primary;
-      case TipoProducto.BEBIDA:
-        return Colors.blue;
-      case TipoProducto.OTRO:
-        return Colors.orange;
-    }
-  }
-
-  IconData _getIconByTipo(TipoProducto tipo) {
-    switch (tipo) {
-      case TipoProducto.PIZZA:
-        return Icons.local_pizza;
-      case TipoProducto.BEBIDA:
-        return Icons.local_drink;
-      case TipoProducto.OTRO:
-        return Icons.restaurant;
-    }
-  }
 }
 
-// ========== VISTA SELECCIÓN PRESENTACIÓN Y SABORES ==========
-class _VistaSeleccionPresentacion extends StatefulWidget {
-  final Producto producto;
-  final Function(_ItemCarrito) onAgregar;
+class _FooterLink extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
-  const _VistaSeleccionPresentacion({
-    required this.producto,
-    required this.onAgregar,
-  });
-
-  @override
-  State<_VistaSeleccionPresentacion> createState() =>
-      _VistaSeleccionPresentacionState();
-}
-
-class _VistaSeleccionPresentacionState
-    extends State<_VistaSeleccionPresentacion> {
-  PresentacionProducto? _presentacionSeleccionada;
-  List<SaborPizza> _saboresDisponibles = [];
-  final List<SaborPizza> _saboresSeleccionados = [];
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _cargarDatos();
-  }
-
-  Future<void> _cargarDatos() async {
-    setState(() => _isLoading = true);
-    final provider = context.read<ProductoProvider>();
-
-    await provider.loadPresentacionesByProducto(widget.producto.id);
-
-    // if (widget.producto.tieneSabores) {
-    //   // Cargar todos los sabores y filtrar por producto
-    //   await provider.loadSabores();
-    //   setState(() {
-    //     _saboresDisponibles = provider.sabores
-    //         .where((s) => s.productoId == widget.producto.id)
-    //         .toList();
-    //   });
-    // }
-    if (widget.producto.tieneSabores) {
-      // Cargar sabores filtrados por producto
-      await provider.loadSaboresByProducto(widget.producto.id);
-      setState(() {
-        _saboresDisponibles = provider.sabores;
-      });
-    }
-    setState(() => _isLoading = false);
-  }
-
-  void _seleccionarPresentacion(PresentacionProducto presentacion) {
-    setState(() {
-      _presentacionSeleccionada = presentacion;
-      _saboresSeleccionados.clear();
-    });
-  }
-
-  void _toggleSabor(SaborPizza sabor) {
-    setState(() {
-      if (_saboresSeleccionados.contains(sabor)) {
-        _saboresSeleccionados.remove(sabor);
-      } else {
-        final maxSabores = _presentacionSeleccionada?.maxSabores ?? 1;
-        if (_saboresSeleccionados.length < maxSabores) {
-          _saboresSeleccionados.add(sabor);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Solo puedes seleccionar $maxSabores sabor${maxSabores > 1 ? 'es' : ''}'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    });
-  }
-
-  Future<void> _agregarAlCarrito() async {
-    if (_presentacionSeleccionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona una presentación'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    if (widget.producto.tieneSabores && _saboresSeleccionados.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona al menos un sabor'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    // Calcular precio (simplificado - en producción deberías obtenerlo del backend)
-    double precio = _presentacionSeleccionada?.precioBase ?? 0;
-
-    final descripcion = widget.producto.tieneSabores
-        ? '${widget.producto.nombre} ${_presentacionSeleccionada!.tipo.name} - ${_saboresSeleccionados.map((s) => s.nombre).join(', ')}'
-        : '${widget.producto.nombre} ${_presentacionSeleccionada!.tipo.name}';
-
-    final item = _ItemCarrito(
-      productoId: widget.producto.id,
-      presentacionId: _presentacionSeleccionada!.id,
-      saboresIds: _saboresSeleccionados.map((s) => s.id).toList(),
-      descripcion: descripcion,
-      precio: precio,
-    );
-
-    widget.onAgregar(item);
-
-    // Resetear selección
-    setState(() {
-      _presentacionSeleccionada = null;
-      _saboresSeleccionados.clear();
-    });
-  }
+  const _FooterLink({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return Consumer<ProductoProvider>(
-      builder: (context, provider, _) {
-        final presentaciones = provider.presentaciones;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Título
-              Text(
-                widget.producto.nombre,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Selección de Presentación
-              Text(
-                'Selecciona la presentación',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...presentaciones.map((presentacion) {
-                final isSelected = _presentacionSeleccionada == presentacion;
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: isSelected
-                        ? const BorderSide(color: AppColors.primary, width: 2)
-                        : BorderSide.none,
-                  ),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.check_circle,
-                      color: isSelected ? AppColors.primary : Colors.grey[300],
-                    ),
-                    title: Text(
-                      presentacion.tipo.name,
-                      style: TextStyle(
-                        fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Hasta ${presentacion.maxSabores} sabor${presentacion.maxSabores > 1 ? 'es' : ''}',
-                    ),
-                    trailing: presentacion.precioBase != null
-                        ? Text(
-                      'Bs. ${presentacion.precioBase!.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    )
-                        : null,
-                    onTap: () => _seleccionarPresentacion(presentacion),
-                  ),
-                );
-              }),
-
-              // Selección de Sabores
-              if (_presentacionSeleccionada != null &&
-                  widget.producto.tieneSabores) ...[
-                const SizedBox(height: 24),
-                Text(
-                  'Selecciona ${_presentacionSeleccionada!.maxSabores > 1 ? 'los sabores' : 'el sabor'}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ..._saboresDisponibles.map((sabor) {
-                  final isSelected = _saboresSeleccionados.contains(sabor);
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    color:
-                    isSelected ? AppColors.primary.withOpacity(0.1) : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: isSelected
-                          ? const BorderSide(
-                          color: AppColors.primary, width: 2)
-                          : BorderSide.none,
-                    ),
-                    child: ListTile(
-                      leading: Icon(
-                        isSelected
-                            ? Icons.check_box
-                            : Icons.check_box_outline_blank,
-                        color:
-                        isSelected ? AppColors.primary : Colors.grey[300],
-                      ),
-                      title: Text(
-                        sabor.nombre,
-                        style: TextStyle(
-                          fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      subtitle: sabor.descripcion != null
-                          ? Text(sabor.descripcion!)
-                          : null,
-                      onTap: () => _toggleSabor(sabor),
-                    ),
-                  );
-                }),
-              ],
-
-              // Botón agregar
-              if (_presentacionSeleccionada != null) ...[
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _agregarAlCarrito,
-                    icon: const Icon(Icons.add_shopping_cart),
-                    label: const Text('Agregar al carrito'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.white.withOpacity(0.6)),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.6)),
+        ),
+      ],
     );
   }
-}
-
-// ========== CARRITO SHEET ==========
-class _CarritoSheet extends StatelessWidget {
-  final List<_ItemCarrito> items;
-  final Function(int) onEliminar;
-  final VoidCallback onConfirmar;
-
-  const _CarritoSheet({
-    required this.items,
-    required this.onEliminar,
-    required this.onConfirmar,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final total = items.fold<double>(0, (sum, item) => sum + item.precio);
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Tu Pedido',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        title: Text(item.descripcion),
-                        subtitle: Text(
-                          'Bs. ${item.precio.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: AppColors.error),
-                          onPressed: () => onEliminar(index),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Total:',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Bs. ${total.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onConfirmar,
-                  icon: const Icon(Icons.check),
-                  label: const Text('Confirmar Pedido'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ========== MODELO DE ITEM DEL CARRITO ==========
-class _ItemCarrito {
-  final int productoId;
-  final int presentacionId;
-  final List<int> saboresIds;
-  final String descripcion;
-  final double precio;
-
-  _ItemCarrito({
-    required this.productoId,
-    required this.presentacionId,
-    required this.saboresIds,
-    required this.descripcion,
-    required this.precio,
-  });
 }
