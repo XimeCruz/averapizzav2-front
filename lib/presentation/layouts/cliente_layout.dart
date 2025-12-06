@@ -260,42 +260,42 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                     );
                   },
                 ),
-                _SidebarItem(
-                  icon: Icons.local_pizza,
-                  title: 'Pizzas por Peso',
-                  isActive: widget.currentRoute == '/cliente/pizzas-peso',
-                  isExpanded: _isSidebarExpanded,
-                  onTap: () {
-                    // TODO: Navegar a pizzas por peso
-                  },
-                ),
-                _SidebarItem(
-                  icon: Icons.local_pizza_outlined,
-                  title: 'Pizzas Redondas',
-                  isActive: widget.currentRoute == '/cliente/pizzas-redondas',
-                  isExpanded: _isSidebarExpanded,
-                  onTap: () {
-                    // TODO: Navegar a pizzas redondas
-                  },
-                ),
-                _SidebarItem(
-                  icon: Icons.restaurant,
-                  title: 'Pizzas en Bandeja',
-                  isActive: widget.currentRoute == '/cliente/pizzas-bandeja',
-                  isExpanded: _isSidebarExpanded,
-                  onTap: () {
-                    // TODO: Navegar a pizzas en bandeja
-                  },
-                ),
-                _SidebarItem(
-                  icon: Icons.local_drink,
-                  title: 'Bebidas',
-                  isActive: widget.currentRoute == '/cliente/bebidas',
-                  isExpanded: _isSidebarExpanded,
-                  onTap: () {
-                    // TODO: Navegar a bebidas
-                  },
-                ),
+                // _SidebarItem(
+                //   icon: Icons.local_pizza,
+                //   title: 'Pizzas por Peso',
+                //   isActive: widget.currentRoute == '/cliente/pizzas-peso',
+                //   isExpanded: _isSidebarExpanded,
+                //   onTap: () {
+                //     // TODO: Navegar a pizzas por peso
+                //   },
+                // ),
+                // _SidebarItem(
+                //   icon: Icons.local_pizza_outlined,
+                //   title: 'Pizzas Redondas',
+                //   isActive: widget.currentRoute == '/cliente/pizzas-redondas',
+                //   isExpanded: _isSidebarExpanded,
+                //   onTap: () {
+                //     // TODO: Navegar a pizzas redondas
+                //   },
+                // ),
+                // _SidebarItem(
+                //   icon: Icons.restaurant,
+                //   title: 'Pizzas en Bandeja',
+                //   isActive: widget.currentRoute == '/cliente/pizzas-bandeja',
+                //   isExpanded: _isSidebarExpanded,
+                //   onTap: () {
+                //     // TODO: Navegar a pizzas en bandeja
+                //   },
+                // ),
+                // _SidebarItem(
+                //   icon: Icons.local_drink,
+                //   title: 'Bebidas',
+                //   isActive: widget.currentRoute == '/cliente/bebidas',
+                //   isExpanded: _isSidebarExpanded,
+                //   onTap: () {
+                //     // TODO: Navegar a bebidas
+                //   },
+                // ),
 
                 const SizedBox(height: 8),
                 if (_isSidebarExpanded)
@@ -559,43 +559,43 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                     }
                   },
                 ),
-                const Divider(color: Color(0xFF2A2A2A)),
-                _DrawerItem(
-                  icon: Icons.local_pizza,
-                  title: 'Pizzas por Peso',
-                  isActive: widget.currentRoute == '/cliente/pizzas-peso',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navegar a pizzas por peso
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.local_pizza_outlined,
-                  title: 'Pizzas Redondas',
-                  isActive: widget.currentRoute == '/cliente/pizzas-redondas',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navegar a pizzas redondas
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.restaurant,
-                  title: 'Pizzas en Bandeja',
-                  isActive: widget.currentRoute == '/cliente/pizzas-bandeja',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navegar a pizzas en bandeja
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.local_drink,
-                  title: 'Bebidas',
-                  isActive: widget.currentRoute == '/cliente/bebidas',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navegar a bebidas
-                  },
-                ),
+                // const Divider(color: Color(0xFF2A2A2A)),
+                // _DrawerItem(
+                //   icon: Icons.local_pizza,
+                //   title: 'Pizzas por Peso',
+                //   isActive: widget.currentRoute == '/cliente/pizzas-peso',
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     // TODO: Navegar a pizzas por peso
+                //   },
+                // ),
+                // _DrawerItem(
+                //   icon: Icons.local_pizza_outlined,
+                //   title: 'Pizzas Redondas',
+                //   isActive: widget.currentRoute == '/cliente/pizzas-redondas',
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     // TODO: Navegar a pizzas redondas
+                //   },
+                // ),
+                // _DrawerItem(
+                //   icon: Icons.restaurant,
+                //   title: 'Pizzas en Bandeja',
+                //   isActive: widget.currentRoute == '/cliente/pizzas-bandeja',
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     // TODO: Navegar a pizzas en bandeja
+                //   },
+                // ),
+                // _DrawerItem(
+                //   icon: Icons.local_drink,
+                //   title: 'Bebidas',
+                //   isActive: widget.currentRoute == '/cliente/bebidas',
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     // TODO: Navegar a bebidas
+                //   },
+                // ),
                 const Divider(color: Color(0xFF2A2A2A)),
                 Consumer<CarritoProvider>(
                   builder: (context, carritoProvider, _) {

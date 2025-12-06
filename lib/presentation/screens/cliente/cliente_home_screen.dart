@@ -1,5 +1,6 @@
 // lib/presentation/screens/cliente/cliente_home_screen.dart
 
+import 'package:avp_frontend/presentation/screens/cliente/pedido_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
@@ -315,7 +316,14 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const PedidoScreen(),
+              ),
+            );
+          },
         ),
         _CategoryCard(
           title: 'Pizza Redonda',
