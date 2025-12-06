@@ -48,10 +48,19 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
     final authProvider = context.watch<AuthProvider>();
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1024;
+    final isTablet = size.width > 600 && size.width <= 1024;
 
     return ClienteLayout(
       title: 'A Vera Pizza',
       currentRoute: '/cliente/home',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white70),
+          onPressed: () async {
+            await Future.delayed(const Duration(seconds: 1));
+          },
+        ),
+      ],
       child: RefreshIndicator(
         onRefresh: () async {
           await Future.delayed(const Duration(seconds: 1));
@@ -60,6 +69,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
         color: AppColors.secondary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.all(isDesktop ? 24 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -79,7 +89,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
                 ),
               ),
 
-              // Categorías principales
+              //Categorías principales
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
                 child: Column(
@@ -335,7 +345,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
 
   Widget _buildBebidasSection(bool isDesktop) {
     return Container(
-      height: 160,
+      height: 200,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0096C7), Color(0xFF023E8A)],
@@ -469,9 +479,9 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
             runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              _FooterLink(icon: Icons.phone, text: '(123) 456-7890'),
+              _FooterLink(icon: Icons.phone, text: '(591) 64042577'),
               _FooterLink(icon: Icons.email, text: 'info@averapizza.com'),
-              _FooterLink(icon: Icons.location_on, text: 'Av. Principal 123'),
+              _FooterLink(icon: Icons.location_on, text: 'Av. Hernando Siles N° 4758 entre la 1 y 2 de obrajes'),
             ],
           ),
           const SizedBox(height: 24),
