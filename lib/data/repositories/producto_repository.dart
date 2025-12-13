@@ -7,6 +7,22 @@ import '../models/producto_model.dart';
 class ProductoRepository {
   final ApiClient _apiClient = ApiClient();
 
+  // Obtiene todos los productos disponibles públicamente (sin autenticación)
+  Future<List<Map<String, dynamic>>> getProductosPublicos() async {
+    try {
+      final response = await _apiClient.get(ApiConstants.productosPublicos);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Error al obtener productos públicos: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error al cargar productos públicos: ${e.toString()}');
+    }
+  }
+
   // ========== PRODUCTOS ==========
   Future<List<Producto>> getProductos() async {
     try {

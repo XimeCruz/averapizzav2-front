@@ -1,10 +1,8 @@
 // lib/presentation/screens/cajero/crear_pedido_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../layouts/cajero_layout.dart';
-import '../../providers/pedido_provider.dart';
 import 'cobro_screen.dart';
 
 class CrearPedidoScreen extends StatefulWidget {

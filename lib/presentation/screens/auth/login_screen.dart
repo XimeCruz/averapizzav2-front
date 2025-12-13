@@ -1,3 +1,4 @@
+import 'package:avp_frontend/presentation/screens/auth/public_catalog_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -366,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: TextField(
             controller: controller,
             obscureText: isPassword,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.black),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: const TextStyle(color: Color(0xFF555555)),
@@ -444,7 +445,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: const Icon(
                               Icons.local_pizza,
-                              size: 120,
+                              size: 90,
                               color: Color(0xFF4ADE80),
                             ),
                           );
@@ -461,7 +462,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'A Vera Pizza',
                         style: TextStyle(
-                          fontSize: 56,
+                          fontSize: 48,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF4ADE80),
                           letterSpacing: -2,
@@ -488,7 +489,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 36,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       height: 1.3,
                     ),
@@ -503,7 +504,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.grey[400],
-                        fontSize: 16,
+                        fontSize: 14,
                         height: 1.6,
                       ),
                     ),
@@ -944,7 +945,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {
-                    // Navigate to catalog without login
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PublicCatalogScreen(),
+                      ),
+                    );
                   },
                   child: const Text(
                     'Ver pizzas disponibles',

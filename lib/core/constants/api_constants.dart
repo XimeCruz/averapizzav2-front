@@ -11,6 +11,10 @@ class ApiConstants {
   static const String login = '$apiVersion/auth/login';
   static String register(String rol) => '$apiVersion/auth/register?rolNombre=$rol';
 
+  //ENDPOINTS SIN SEGURIDAD
+  static const String productosPublicos = '$apiVersion/auth/completo';
+
+
   // ========== USUARIOS ENDPOINTS ==========
   static const String usuarios = '$apiVersion/admin/usuarios';
   static String usuarioById(int id) => '$apiVersion/admin/usuarios/$id';
