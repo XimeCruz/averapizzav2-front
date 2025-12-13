@@ -189,12 +189,6 @@ class PedidoDetailDialog extends StatelessWidget {
                     // Detalles del pedido
                     Row(
                       children: [
-                        Icon(
-                          Icons.receipt_long_rounded,
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 8),
                         const Text(
                           'Productos',
                           style: TextStyle(
