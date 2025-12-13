@@ -11,7 +11,6 @@ class DetallePedido {
   final int? sabor3Id;
   final double? pesoKg;
 
-  // Información adicional para mostrar
   final String? productoNombre;
   final String? presentacionNombre;
   final String? sabor1Nombre;
@@ -45,13 +44,15 @@ class DetallePedido {
       cantidad: json['cantidad'] ?? 1,
       subtotal: (json['subtotal'] ?? 0).toDouble(),
       precioUnitario: (json['precioUnitario'] ?? 0).toDouble(),
-      presentacionId: json['presentacionId'] ?? json['presentacion']?['id'] ?? 0,
-      sabor1Id: json['sabor1Id'] ?? json['sabor1']?['id'] ?? 0,
-      sabor2Id: json['sabor2Id'] ?? json['sabor2']?['id'],
-      sabor3Id: json['sabor3Id'] ?? json['sabor3']?['id'],
+      presentacionId: json['presentacionId'] ?? 0,
+      sabor1Id: json['sabor1Id'] ?? 0,
+      sabor2Id: json['sabor2Id'],
+      sabor3Id: json['sabor3Id'],
       pesoKg: json['pesoKg'] != null ? (json['pesoKg'] as num).toDouble() : null,
-      productoNombre: json['productoNombre'],
-      presentacionNombre: json['presentacion'],
+
+      // Nombres - maneja tanto el formato con 'Nombre' como sin él
+      productoNombre: json['productoNombre'] ?? json['producto']?['nombre'],
+      presentacionNombre: json['presentacionNombre'] ?? json['presentacion'],
       sabor1Nombre: json['sabor1'],
       sabor2Nombre: json['sabor2'],
       sabor3Nombre: json['sabor3'],
@@ -79,32 +80,38 @@ class DetallePedido {
 
   String getSaboresText() {
     final sabores = <String>[];
-    if (sabor1Nombre != null) sabores.add(sabor1Nombre!);
-    if (sabor2Nombre != null) sabores.add(sabor2Nombre!);
-    if (sabor3Nombre != null) sabores.add(sabor3Nombre!);
+    if (sabor1Nombre != null && sabor1Nombre!.isNotEmpty) {
+      sabores.add(sabor1Nombre!);
+    }
+    if (sabor2Nombre != null && sabor2Nombre!.isNotEmpty) {
+      sabores.add(sabor2Nombre!);
+    }
+    if (sabor3Nombre != null && sabor3Nombre!.isNotEmpty) {
+      sabores.add(sabor3Nombre!);
+    }
     return sabores.join(' + ');
   }
 
-  String getDescripcion() {
-    final descripcion = StringBuffer();
-
-    if (productoNombre != null) {
-      descripcion.write(productoNombre);
-    }
-
-    if (presentacionNombre != null) {
-      descripcion.write(' - $presentacionNombre');
-    }
-
-    if (pesoKg != null) {
-      descripcion.write(' (${pesoKg}kg)');
-    }
-
-    final saboresText = getSaboresText();
-    if (saboresText.isNotEmpty) {
-      descripcion.write('\n$saboresText');
-    }
-
-    return descripcion.toString();
-  }
+  // String getDescripcion() {
+  //   final descripcion = StringBuffer();
+  //
+  //   if (productoNombre != null) {
+  //     descripcion.write(productoNombre);
+  //   }
+  //
+  //   if (presentacionNombre != null) {
+  //     descripcion.write(' - $presentacionNombre');
+  //   }
+  //
+  //   if (pesoKg != null) {
+  //     descripcion.write(' (${pesoKg!.toStringAsFixed(2)}kg)');
+  //   }
+  //
+  //   final saboresText = getSaboresText();
+  //   if (saboresText.isNotEmpty) {
+  //     descripcion.write('\n$saboresText');
+  //   }
+  //
+  //   return descripcion.toString();
+  // }
 }
