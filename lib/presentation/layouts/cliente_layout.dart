@@ -10,6 +10,7 @@ import '../screens/cliente/cliente_home_screen.dart';
 import '../screens/cliente/carrito_screen.dart';
 import '../screens/cliente/mis_pedidos_screen.dart';
 import '../screens/cliente/perfil_screen.dart';
+import '../providers/ui_provider.dart';
 
 /// Layout reutilizable para todas las pantallas de cliente
 /// Incluye sidebar colapsable para desktop y drawer para mobile
@@ -52,12 +53,6 @@ class _ClienteLayoutState extends State<ClienteLayout> {
     });
   }
 
-  void _toggleSidebar() {
-    setState(() {
-      _isSidebarExpanded = !_isSidebarExpanded;
-    });
-  }
-
   void _logout() async {
     final authProvider = context.read<AuthProvider>();
     await authProvider.logout();
@@ -74,6 +69,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final size = MediaQuery.of(context).size;
+    final uiProvider = context.watch<UiProvider>();
     final isDesktop = size.width > 1024;
 
     return Scaffold(
@@ -84,13 +80,13 @@ class _ClienteLayoutState extends State<ClienteLayout> {
         elevation: 0,
         leading: isDesktop
             ? IconButton(
-          icon: Icon(
-            _isSidebarExpanded ? Icons.menu_open : Icons.menu,
-            color: Colors.white70,
-          ),
-          onPressed: _toggleSidebar,
-          tooltip: _isSidebarExpanded ? 'Colapsar menú' : 'Expandir menú',
-        )
+                icon: Icon(
+                  uiProvider.isSidebarExpanded ? Icons.menu_open : Icons.menu,
+                  color: Colors.white70,
+                ),
+                onPressed: () => context.read<UiProvider>().toggleSidebar(),
+                tooltip: uiProvider.isSidebarExpanded ? 'Colapsar menú' : 'Expandir menú',
+              )
             : null,
         automaticallyImplyLeading: !isDesktop,
         title: Text(
@@ -152,7 +148,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
       body: Row(
         children: [
           // Sidebar para desktop
-          if (isDesktop) _buildCollapsibleSidebar(context, authProvider),
+          if (isDesktop) _buildCollapsibleSidebar(context, authProvider, uiProvider),
 
           // Contenido principal
           Expanded(
@@ -164,11 +160,11 @@ class _ClienteLayoutState extends State<ClienteLayout> {
   }
 
   // Sidebar colapsable
-  Widget _buildCollapsibleSidebar(BuildContext context, AuthProvider authProvider) {
+  Widget _buildCollapsibleSidebar(BuildContext context, AuthProvider authProvider, UiProvider uiProvider) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      width: _isSidebarExpanded ? 280 : 72,
+      width: uiProvider.isSidebarExpanded ? 280 : 72,
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
         border: Border(
@@ -183,27 +179,27 @@ class _ClienteLayoutState extends State<ClienteLayout> {
           // Logo y título
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: EdgeInsets.all(_isSidebarExpanded ? 24 : 16),
+            padding: EdgeInsets.all(uiProvider.isSidebarExpanded ? 24 : 16),
             child: Column(
               children: [
                 Container(
-                  width: _isSidebarExpanded ? 60 : 40,
-                  height: _isSidebarExpanded ? 60 : 40,
+                  width: uiProvider.isSidebarExpanded ? 60 : 40,
+                  height: uiProvider.isSidebarExpanded ? 60 : 40,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [AppColors.secondary, Color(0xFFE65100)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(_isSidebarExpanded ? 16 : 12),
+                    borderRadius: BorderRadius.circular(uiProvider.isSidebarExpanded ? 16 : 12),
                   ),
                   child: Icon(
                     Icons.local_pizza,
                     color: Colors.white,
-                    size: _isSidebarExpanded ? 32 : 24,
+                    size: uiProvider.isSidebarExpanded ? 32 : 24,
                   ),
                 ),
-                if (_isSidebarExpanded) ...[
+                if (uiProvider.isSidebarExpanded) ...[
                   const SizedBox(height: 12),
                   const Text(
                     'A Vera Pizza',
@@ -233,7 +229,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               children: [
-                if (_isSidebarExpanded)
+                if (uiProvider.isSidebarExpanded)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
@@ -250,7 +246,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                   icon: Icons.home_rounded,
                   title: 'Inicio',
                   isActive: widget.currentRoute == '/cliente/home',
-                  isExpanded: _isSidebarExpanded,
+                  isExpanded: uiProvider.isSidebarExpanded,
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -298,7 +294,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                 // ),
 
                 const SizedBox(height: 8),
-                if (_isSidebarExpanded)
+                if (uiProvider.isSidebarExpanded)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
@@ -318,7 +314,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                       icon: Icons.shopping_cart,
                       title: 'Carrito',
                       isActive: widget.currentRoute == '/cliente/carrito',
-                      isExpanded: _isSidebarExpanded,
+                      isExpanded: uiProvider.isSidebarExpanded,
                       badge: carritoProvider.cantidadItems,
                       badgeColor: AppColors.secondary,
                       onTap: () {
@@ -336,7 +332,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                   icon: Icons.receipt_long,
                   title: 'Mis Pedidos',
                   isActive: widget.currentRoute == '/cliente/mis-pedidos',
-                  isExpanded: _isSidebarExpanded,
+                  isExpanded: uiProvider.isSidebarExpanded,
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -350,7 +346,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                   icon: Icons.person,
                   title: 'Mi Perfil',
                   isActive: widget.currentRoute == '/cliente/perfil',
-                  isExpanded: _isSidebarExpanded,
+                  isExpanded: uiProvider.isSidebarExpanded,
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -365,7 +361,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
           ),
 
           // Footer con usuario
-          if (_isSidebarExpanded)
+          if (uiProvider.isSidebarExpanded)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
@@ -681,8 +677,6 @@ class _SidebarItem extends StatelessWidget {
   final String title;
   final bool isActive;
   final bool isExpanded;
-  final int? badge;
-  final Color? badgeColor;
   final VoidCallback onTap;
 
   const _SidebarItem({
@@ -690,8 +684,6 @@ class _SidebarItem extends StatelessWidget {
     required this.title,
     this.isActive = false,
     required this.isExpanded,
-    this.badge,
-    this.badgeColor,
     required this.onTap,
   });
 
@@ -706,7 +698,9 @@ class _SidebarItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Tooltip(
             message: isExpanded ? '' : title,
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
               padding: EdgeInsets.symmetric(
                 horizontal: isExpanded ? 16 : 8,
                 vertical: 12,
@@ -723,82 +717,45 @@ class _SidebarItem extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: isExpanded
-                  ? Row(
-                children: [
-                  Icon(
-                    icon,
-                    color: isActive ? AppColors.secondary : Colors.white60,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        color: isActive ? AppColors.secondary : Colors.white70,
-                        fontSize: 14,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // 👇 CLAVE: solo mostrar texto cuando el ancho REAL existe
+                  final showText =
+                      isExpanded && constraints.maxWidth > 180;
+
+                  return Row(
+                    children: [
+                      Icon(
+                        icon,
+                        color: isActive
+                            ? AppColors.secondary
+                            : Colors.white60,
+                        size: isExpanded ? 20 : 24,
                       ),
-                    ),
-                  ),
-                  if (badge != null && badge! > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: badgeColor ?? AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        badge.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                ],
-              )
-                  : Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Center(
-                    child: Icon(
-                      icon,
-                      color: isActive ? AppColors.secondary : Colors.white60,
-                      size: 24,
-                    ),
-                  ),
-                  if (badge != null && badge! > 0)
-                    Positioned(
-                      right: -4,
-                      top: -4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: badgeColor ?? AppColors.error,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          badge! > 9 ? '9+' : badge.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+
+                      if (showText) const SizedBox(width: 12),
+
+                      if (showText)
+                        SizedBox(
+                          width: constraints.maxWidth - 72,
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isActive
+                                  ? AppColors.secondary
+                                  : Colors.white70,
+                              fontSize: 14,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ),

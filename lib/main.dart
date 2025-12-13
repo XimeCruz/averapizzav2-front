@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'core/storage/secure_storage.dart';
 import 'core/constants/app_colors.dart';
 import 'presentation/providers/auth_provider.dart';
@@ -12,15 +13,31 @@ import 'presentation/providers/producto_provider.dart';
 import 'presentation/providers/insumo_provider.dart';
 import 'presentation/providers/pedido_provider.dart';
 import 'presentation/providers/dashboard_provider.dart';
+import 'presentation/providers/ui_provider.dart';
 import 'presentation/screens/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar storage
   await SecureStorage.init();
-
   runApp(const MyApp());
+}
+
+/* ============================================================
+   🚫 PAGE TRANSITION SIN ANIMACIÓN (GLOBAL)
+   ============================================================ */
+class NoAnimationPageTransitionsBuilder extends PageTransitionsBuilder {
+  const NoAnimationPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -38,7 +55,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => CarritoProvider()),
-
+        ChangeNotifierProvider(create: (_) => UiProvider()),
       ],
       child: MaterialApp(
         title: 'A Vera Pizza Italia',
@@ -49,11 +66,23 @@ class MyApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
-          Locale('es', 'MX'), // Español
+          Locale('es', 'MX'),
         ],
         locale: const Locale('es', 'MX'),
         theme: ThemeData(
           useMaterial3: true,
+
+          // 🚫 DESACTIVA ANIMACIONES EN TODA LA APP
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: NoAnimationPageTransitionsBuilder(),
+              TargetPlatform.iOS: NoAnimationPageTransitionsBuilder(),
+              TargetPlatform.windows: NoAnimationPageTransitionsBuilder(),
+              TargetPlatform.linux: NoAnimationPageTransitionsBuilder(),
+              TargetPlatform.macOS: NoAnimationPageTransitionsBuilder(),
+            },
+          ),
+
           colorScheme: ColorScheme.fromSeed(
             seedColor: AppColors.primary,
             brightness: Brightness.light,
@@ -101,7 +130,10 @@ class MyApp extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 2,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

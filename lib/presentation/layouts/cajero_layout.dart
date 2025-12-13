@@ -14,6 +14,8 @@ import '../screens/cajero/pedidos_en_cocina_screen.dart';
 import '../screens/cajero/pedidos_list_screen.dart';
 import '../screens/cajero/pedidos_listos_screen.dart';
 import '../screens/cajero/pedidos_pendientes_screen.dart';
+import '../providers/ui_provider.dart';
+
 
 /// Layout reutilizable para todas las pantallas de cajero
 /// Incluye sidebar colapsable para desktop y drawer para mobile
@@ -54,12 +56,6 @@ class _CajeroLayoutState extends State<CajeroLayout> {
     });
   }
 
-  void _toggleSidebar() {
-    setState(() {
-      _isSidebarExpanded = !_isSidebarExpanded;
-    });
-  }
-
   void _logout() async {
     final authProvider = context.read<AuthProvider>();
     await authProvider.logout();
@@ -73,8 +69,9 @@ class _CajeroLayoutState extends State<CajeroLayout> {
   }
 
   @override
-  Widget build(BuildContext context) {
+   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final uiProvider = context.watch<UiProvider>(); 
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1024;
 
@@ -86,13 +83,13 @@ class _CajeroLayoutState extends State<CajeroLayout> {
         elevation: 0,
         leading: isDesktop
             ? IconButton(
-          icon: Icon(
-            _isSidebarExpanded ? Icons.menu_open : Icons.menu,
-            color: Colors.white70,
-          ),
-          onPressed: _toggleSidebar,
-          tooltip: _isSidebarExpanded ? 'Colapsar menú' : 'Expandir menú',
-        )
+                icon: Icon(
+                  uiProvider.isSidebarExpanded ? Icons.menu_open : Icons.menu,
+                  color: Colors.white70,
+                ),
+                onPressed: () => context.read<UiProvider>().toggleSidebar(),
+                tooltip: uiProvider.isSidebarExpanded ? 'Colapsar menú' : 'Expandir menú',
+              )
             : null,
         automaticallyImplyLeading: !isDesktop,
         title: Text(
@@ -104,24 +101,19 @@ class _CajeroLayoutState extends State<CajeroLayout> {
       floatingActionButton: widget.floatingActionButton,
       body: Row(
         children: [
-          // Sidebar para desktop
-          if (isDesktop) _buildCollapsibleSidebar(context, authProvider),
-
-          // Contenido principal
-          Expanded(
-            child: widget.child,
-          ),
+          if (isDesktop) _buildCollapsibleSidebar(context, authProvider, uiProvider),
+          Expanded(child: widget.child),
         ],
       ),
     );
   }
 
   // Sidebar colapsable
-  Widget _buildCollapsibleSidebar(BuildContext context, AuthProvider authProvider) {
+  Widget _buildCollapsibleSidebar(BuildContext context, AuthProvider authProvider,  UiProvider uiProvider) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      width: _isSidebarExpanded ? 280 : 72,
+      width: uiProvider.isSidebarExpanded ? 280 : 72,
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
         border: Border(
@@ -136,27 +128,27 @@ class _CajeroLayoutState extends State<CajeroLayout> {
           // Logo y título
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: EdgeInsets.all(_isSidebarExpanded ? 24 : 16),
+            padding: EdgeInsets.all(uiProvider.isSidebarExpanded ? 24 : 16),
             child: Column(
               children: [
                 Container(
-                  width: _isSidebarExpanded ? 60 : 40,
-                  height: _isSidebarExpanded ? 60 : 40,
+                  width: uiProvider.isSidebarExpanded ? 60 : 40,
+                  height: uiProvider.isSidebarExpanded ? 60 : 40,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [AppColors.secondary, Color(0xFFE65100)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(_isSidebarExpanded ? 16 : 12),
+                    borderRadius: BorderRadius.circular(uiProvider.isSidebarExpanded ? 16 : 12),
                   ),
                   child: Icon(
                     Icons.point_of_sale,
                     color: Colors.white,
-                    size: _isSidebarExpanded ? 32 : 24,
+                    size: uiProvider.isSidebarExpanded ? 32 : 24,
                   ),
                 ),
-                if (_isSidebarExpanded) ...[
+                if (uiProvider.isSidebarExpanded) ...[
                   const SizedBox(height: 12),
                   const Text(
                     'POS Cajero',
@@ -186,7 +178,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               children: [
-                if (_isSidebarExpanded)
+                if (uiProvider.isSidebarExpanded)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
@@ -203,7 +195,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                   icon: Icons.home_rounded,
                   title: 'Inicio',
                   isActive: widget.currentRoute == '/cajero/dashboard',
-                  isExpanded: _isSidebarExpanded,
+                  isExpanded: uiProvider.isSidebarExpanded,
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -217,7 +209,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                   icon: Icons.add_shopping_cart,
                   title: 'Nuevo Pedido',
                   isActive: widget.currentRoute == '/cajero/crear-pedido',
-                  isExpanded: _isSidebarExpanded,
+                  isExpanded: uiProvider.isSidebarExpanded,
                   isAction: true,
                   onTap: () {
                     Navigator.push(
@@ -230,7 +222,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                 ),
 
                 const SizedBox(height: 8),
-                if (_isSidebarExpanded)
+                if (uiProvider.isSidebarExpanded)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
@@ -252,7 +244,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                           icon: Icons.pending_actions,
                           title: 'Pendientes',
                           isActive: widget.currentRoute == '/cajero/pendientes',
-                          isExpanded: _isSidebarExpanded,
+                          isExpanded: uiProvider.isSidebarExpanded,
                           badge: provider.getCantidadPedidosPendientes(),
                           badgeColor: AppColors.warning,
                           onTap: () {
@@ -268,7 +260,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                           icon: Icons.restaurant,
                           title: 'En Cocina',
                           isActive: widget.currentRoute == '/cajero/en-cocina',
-                          isExpanded: _isSidebarExpanded,
+                          isExpanded: uiProvider.isSidebarExpanded,
                           badge: provider.getCantidadPedidosEnPreparacion(),
                           badgeColor: AppColors.info,
                           onTap: () {
@@ -284,7 +276,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                           icon: Icons.check_circle,
                           title: 'Listos',
                           isActive: widget.currentRoute == '/cajero/listos',
-                          isExpanded: _isSidebarExpanded,
+                          isExpanded: uiProvider.isSidebarExpanded,
                           badge: provider.getCantidadPedidosListos(),
                           badgeColor: AppColors.success,
                           onTap: () {
@@ -302,7 +294,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                 ),
 
                 const SizedBox(height: 8),
-                if (_isSidebarExpanded)
+                if (uiProvider.isSidebarExpanded)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
@@ -319,7 +311,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                   icon: Icons.history,
                   title: 'Historial',
                   isActive: widget.currentRoute == '/cajero/historial',
-                  isExpanded: _isSidebarExpanded,
+                  isExpanded: uiProvider.isSidebarExpanded,
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -333,7 +325,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                   icon: Icons.receipt_long,
                   title: 'Todos los Pedidos',
                   isActive: widget.currentRoute == '/cajero/todos',
-                  isExpanded: _isSidebarExpanded,
+                  isExpanded: uiProvider.isSidebarExpanded,
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -348,7 +340,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
           ),
 
           // Footer con usuario
-          if (_isSidebarExpanded)
+          if (uiProvider.isSidebarExpanded)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
@@ -743,91 +735,81 @@ class _SidebarItem extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: isExpanded
-                  ? Row(
-                children: [
-                  Icon(
-                    icon,
-                    color: isAction || isActive
-                        ? AppColors.secondary
-                        : Colors.white60,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        color: isAction || isActive
-                            ? AppColors.secondary
-                            : Colors.white70,
-                        fontSize: 14,
-                        fontWeight: isAction || isActive
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (badge != null && badge! > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: badgeColor ?? AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        badge.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                ],
-              )
-                  : Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Center(
-                    child: Icon(
-                      icon,
-                      color: isAction || isActive
-                          ? AppColors.secondary
-                          : Colors.white60,
-                      size: 24,
-                    ),
-                  ),
-                  if (badge != null && badge! > 0)
-                    Positioned(
-                      right: -4,
-                      top: -4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: badgeColor ?? AppColors.error,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          badge! > 9 ? '9+' : badge.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+              child: 
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final showText = isExpanded && constraints.maxWidth > 180;
+
+                    return(
+                      Row(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(
+                                icon,
+                                color: isAction
+                                    ? AppColors.secondary
+                                    : isActive
+                                    ? AppColors.secondary
+                                    : Colors.white70,
+                                size: 24,
+                              ),
+                              if (badge != null && badge! > 0)
+                                Positioned(
+                                  right: -6,
+                                  top: -6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: badgeColor ?? AppColors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    child: Text(
+                                      badge! > 9 ? '9+' : badge.toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                          if (showText) ...[
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: TextStyle(
+                                  color: isAction
+                                      ? AppColors.secondary
+                                      : isActive
+                                      ? AppColors.secondary
+                                      : Colors.white70,
+                                  fontWeight: isAction || isActive ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    );
+                      
+                  }
+                )
+              
+              
+              
+              
+              
+              
             ),
           ),
         ),
