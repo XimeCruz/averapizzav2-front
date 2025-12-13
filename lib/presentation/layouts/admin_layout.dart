@@ -64,7 +64,7 @@ class _AdminLayoutState extends State<AdminLayout> {
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -88,7 +88,9 @@ class _AdminLayoutState extends State<AdminLayout> {
                   color: Colors.white70,
                 ),
                 onPressed: () => context.read<UiProvider>().toggleSidebar(),
-                tooltip: uiProvider.isSidebarExpanded ? 'Colapsar menú' : 'Expandir menú',
+                tooltip: uiProvider.isSidebarExpanded
+                    ? 'Colapsar menú'
+                    : 'Expandir menú',
               )
             : null,
         automaticallyImplyLeading: !isDesktop,
@@ -98,10 +100,7 @@ class _AdminLayoutState extends State<AdminLayout> {
             //   Icon(widget.titleIcon, color: Colors.white70),
             //   const SizedBox(width: 12),
             // ],
-            Text(
-              widget.title,
-              style: const TextStyle(color: Colors.white),
-            ),
+            Text(widget.title, style: const TextStyle(color: Colors.white)),
           ],
         ),
         actions: widget.actions ?? [],
@@ -109,7 +108,8 @@ class _AdminLayoutState extends State<AdminLayout> {
       floatingActionButton: widget.floatingActionButton,
       body: Row(
         children: [
-          if (isDesktop) _buildCollapsibleSidebar(context, authProvider, uiProvider),
+          if (isDesktop)
+            _buildCollapsibleSidebar(context, authProvider, uiProvider),
           Expanded(child: widget.child),
         ],
       ),
@@ -117,19 +117,18 @@ class _AdminLayoutState extends State<AdminLayout> {
   }
 
   // Sidebar colapsable
-  Widget _buildCollapsibleSidebar(BuildContext context, AuthProvider authProvider, UiProvider uiProvider) {
+  Widget _buildCollapsibleSidebar(
+    BuildContext context,
+    AuthProvider authProvider,
+    UiProvider uiProvider,
+  ) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       width: uiProvider.isSidebarExpanded ? 280 : 72,
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
-        border: Border(
-          right: BorderSide(
-            color: Color(0xFF2A2A2A),
-            width: 1,
-          ),
-        ),
+        border: Border(right: BorderSide(color: Color(0xFF2A2A2A), width: 1)),
       ),
       child: Column(
         children: [
@@ -148,7 +147,9 @@ class _AdminLayoutState extends State<AdminLayout> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(uiProvider.isSidebarExpanded ? 16 : 12),
+                    borderRadius: BorderRadius.circular(
+                      uiProvider.isSidebarExpanded ? 16 : 12,
+                    ),
                   ),
                   child: Icon(
                     Icons.local_pizza,
@@ -241,9 +242,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const RecetasScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const RecetasScreen()),
                     );
                   },
                 ),
@@ -255,9 +254,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const ClientesScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const ClientesScreen()),
                     );
                   },
                 ),
@@ -319,9 +316,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const ReportesScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const ReportesScreen()),
                     );
                   },
                 ),
@@ -335,56 +330,70 @@ class _AdminLayoutState extends State<AdminLayout> {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: Color(0xFF2A2A2A),
-                    width: 1,
-                  ),
+                  top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
                 ),
               ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: AppColors.secondary,
-                    child: Text(
-                      (authProvider.userName?.substring(0, 1) ?? 'A').toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // 👇 CLAVE: solo mostrar texto cuando el ancho REAL existe
+                  final showText =
+                      uiProvider.isSidebarExpanded &&
+                      constraints.maxWidth > 220;
+
+                  if (showText) {
+                    return Row(
                       children: [
-                        Text(
-                          authProvider.userName ?? 'Usuario',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                        CircleAvatar(
+                          backgroundColor: AppColors.secondary,
+                          child: Text(
+                            (authProvider.userName?.substring(0, 1) ?? 'A')
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          'Administrador',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 12,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                authProvider.userName ?? 'Usuario',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'Administrador',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.logout,
+                            color: AppColors.secondary,
+                            size: 20,
+                          ),
+                          onPressed: _logout,
+                          tooltip: 'Cerrar Sesión',
                         ),
                       ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: AppColors.secondary, size: 20),
-                    onPressed: _logout,
-                    tooltip: 'Cerrar Sesión',
-                  ),
-                ],
+                    );
+                  }
+                  return SizedBox.shrink();
+                },
               ),
             )
           else
@@ -392,10 +401,7 @@ class _AdminLayoutState extends State<AdminLayout> {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: Color(0xFF2A2A2A),
-                    width: 1,
-                  ),
+                  top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
                 ),
               ),
               child: Column(
@@ -404,7 +410,8 @@ class _AdminLayoutState extends State<AdminLayout> {
                     backgroundColor: AppColors.secondary,
                     radius: 20,
                     child: Text(
-                      (authProvider.userName?.substring(0, 1) ?? 'A').toUpperCase(),
+                      (authProvider.userName?.substring(0, 1) ?? 'A')
+                          .toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -413,7 +420,11 @@ class _AdminLayoutState extends State<AdminLayout> {
                   ),
                   const SizedBox(height: 20),
                   IconButton(
-                    icon: const Icon(Icons.logout, color: AppColors.secondary, size: 20),
+                    icon: const Icon(
+                      Icons.logout,
+                      color: AppColors.secondary,
+                      size: 20,
+                    ),
                     onPressed: _logout,
                     tooltip: 'Cerrar Sesión',
                     padding: EdgeInsets.zero,
@@ -469,10 +480,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                 const SizedBox(height: 4),
                 Text(
                   authProvider.userName ?? 'Usuario',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
@@ -648,16 +656,13 @@ class _SidebarItem extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   // 👇 CLAVE: solo mostrar texto cuando el ancho REAL existe
-                  final showText =
-                      isExpanded && constraints.maxWidth > 180;
+                  final showText = isExpanded && constraints.maxWidth > 180;
 
                   return Row(
                     children: [
                       Icon(
                         icon,
-                        color: isActive
-                            ? AppColors.secondary
-                            : Colors.white60,
+                        color: isActive ? AppColors.secondary : Colors.white60,
                         size: isExpanded ? 20 : 24,
                       ),
 
@@ -692,7 +697,6 @@ class _SidebarItem extends StatelessWidget {
     );
   }
 }
-
 
 // Drawer Item
 class _DrawerItem extends StatelessWidget {
@@ -729,9 +733,7 @@ class _DrawerItem extends StatelessWidget {
       ),
       selected: isActive,
       selectedTileColor: AppColors.secondary.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: onTap,
     );
   }

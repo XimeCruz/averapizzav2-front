@@ -61,7 +61,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -85,14 +85,13 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                   color: Colors.white70,
                 ),
                 onPressed: () => context.read<UiProvider>().toggleSidebar(),
-                tooltip: uiProvider.isSidebarExpanded ? 'Colapsar menú' : 'Expandir menú',
+                tooltip: uiProvider.isSidebarExpanded
+                    ? 'Colapsar menú'
+                    : 'Expandir menú',
               )
             : null,
         automaticallyImplyLeading: !isDesktop,
-        title: Text(
-          widget.title,
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
         actions: [
           ...?widget.actions,
           if (widget.showCartButton)
@@ -102,7 +101,10 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                 return Stack(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.shopping_cart, color: Colors.white70),
+                      icon: const Icon(
+                        Icons.shopping_cart,
+                        color: Colors.white70,
+                      ),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -148,31 +150,29 @@ class _ClienteLayoutState extends State<ClienteLayout> {
       body: Row(
         children: [
           // Sidebar para desktop
-          if (isDesktop) _buildCollapsibleSidebar(context, authProvider, uiProvider),
+          if (isDesktop)
+            _buildCollapsibleSidebar(context, authProvider, uiProvider),
 
           // Contenido principal
-          Expanded(
-            child: widget.child,
-          ),
+          Expanded(child: widget.child),
         ],
       ),
     );
   }
 
   // Sidebar colapsable
-  Widget _buildCollapsibleSidebar(BuildContext context, AuthProvider authProvider, UiProvider uiProvider) {
+  Widget _buildCollapsibleSidebar(
+    BuildContext context,
+    AuthProvider authProvider,
+    UiProvider uiProvider,
+  ) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       width: uiProvider.isSidebarExpanded ? 280 : 72,
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
-        border: Border(
-          right: BorderSide(
-            color: Color(0xFF2A2A2A),
-            width: 1,
-          ),
-        ),
+        border: Border(right: BorderSide(color: Color(0xFF2A2A2A), width: 1)),
       ),
       child: Column(
         children: [
@@ -191,7 +191,9 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(uiProvider.isSidebarExpanded ? 16 : 12),
+                    borderRadius: BorderRadius.circular(
+                      uiProvider.isSidebarExpanded ? 16 : 12,
+                    ),
                   ),
                   child: Icon(
                     Icons.local_pizza,
@@ -256,6 +258,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                     );
                   },
                 ),
+
                 // _SidebarItem(
                 //   icon: Icons.local_pizza,
                 //   title: 'Pizzas por Peso',
@@ -292,7 +295,6 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                 //     // TODO: Navegar a bebidas
                 //   },
                 // ),
-
                 const SizedBox(height: 8),
                 if (uiProvider.isSidebarExpanded)
                   const Padding(
@@ -350,9 +352,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const PerfilScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const PerfilScreen()),
                     );
                   },
                 ),
@@ -366,10 +366,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: Color(0xFF2A2A2A),
-                    width: 1,
-                  ),
+                  top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
                 ),
               ),
               child: Column(
@@ -381,66 +378,90 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                       color: const Color(0xFF2A2A2A),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.secondary,
-                          child: Text(
-                            (authProvider.userName?.substring(0, 1) ?? 'U').toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final showText =
+                            uiProvider.isSidebarExpanded &&
+                            constraints.maxWidth > 220;
+
+                        if (showText) {
+                          return Column(
+                            spacing: 20,
                             children: [
-                              Text(
-                                authProvider.userName ?? 'Usuario',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Cliente',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: AppColors.secondary,
+                                    child: Text(
+                                      (authProvider.userName?.substring(0, 1) ??
+                                              'U')
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          authProvider.userName ?? 'Usuario',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          'Cliente',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.5,
+                                            ),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ), // Botones de acción
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _logout,
+                                  icon: const Icon(Icons.logout, size: 18),
+                                  label: const Text('Cerrar Sesión'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.error,
+                                    side: BorderSide(
+                                      color: AppColors.error.withOpacity(0.3),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
-                        ),
-                      ],
+                          );
+                        }
+
+                        return SizedBox.shrink();
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Botón de cerrar sesión
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _logout,
-                      icon: const Icon(Icons.logout, size: 18),
-                      label: const Text('Cerrar Sesión'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: BorderSide(color: AppColors.error.withOpacity(0.3)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             )
@@ -449,10 +470,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: Color(0xFF2A2A2A),
-                    width: 1,
-                  ),
+                  top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
                 ),
               ),
               child: Column(
@@ -461,7 +479,8 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                     backgroundColor: AppColors.secondary,
                     radius: 20,
                     child: Text(
-                      (authProvider.userName?.substring(0, 1) ?? 'U').toUpperCase(),
+                      (authProvider.userName?.substring(0, 1) ?? 'U')
+                          .toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -470,7 +489,11 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                   ),
                   const SizedBox(height: 16),
                   IconButton(
-                    icon: const Icon(Icons.logout, color: AppColors.error, size: 20),
+                    icon: const Icon(
+                      Icons.logout,
+                      color: AppColors.error,
+                      size: 20,
+                    ),
                     onPressed: _logout,
                     tooltip: 'Cerrar Sesión',
                     padding: EdgeInsets.zero,
@@ -526,10 +549,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                 const SizedBox(height: 4),
                 Text(
                   authProvider.userName ?? 'Usuario',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
@@ -634,9 +654,7 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                     Navigator.pop(context);
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const PerfilScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const PerfilScreen()),
                     );
                   },
                 ),
@@ -719,82 +737,98 @@ class _SidebarItem extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: isExpanded
-                  ? Row(
-                children: [
-                  Icon(
-                    icon,
-                    color: isActive ? AppColors.secondary : Colors.white60,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        color: isActive ? AppColors.secondary : Colors.white70,
-                        fontSize: 14,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (badge != null && badge! > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: badgeColor ?? AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        badge.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final showText = isExpanded && constraints.maxWidth > 180;
+
+                  if (showText) {
+                    return Row(
+                      children: [
+                        Icon(
+                          icon,
+                          color: isActive
+                              ? AppColors.secondary
+                              : Colors.white60,
+                          size: 20,
                         ),
-                      ),
-                    ),
-                ],
-              )
-                  : Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Center(
-                    child: Icon(
-                      icon,
-                      color: isActive ? AppColors.secondary : Colors.white60,
-                      size: 24,
-                    ),
-                  ),
-                  if (badge != null && badge! > 0)
-                    Positioned(
-                      right: -4,
-                      top: -4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: badgeColor ?? AppColors.error,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          badge! > 9 ? '9+' : badge.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              color: isActive
+                                  ? AppColors.secondary
+                                  : Colors.white70,
+                              fontSize: 14,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
+                        ),
+                        if (badge != null && badge! > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor ?? AppColors.error,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              badge.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  }
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Center(
+                        child: Icon(
+                          icon,
+                          color: isActive
+                              ? AppColors.secondary
+                              : Colors.white60,
+                          size: 24,
                         ),
                       ),
-                    ),
-                ],
+                      if (badge != null && badge! > 0)
+                        Positioned(
+                          right: -4,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: badgeColor ?? AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              badge! > 9 ? '9+' : badge.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
@@ -845,10 +879,7 @@ class _DrawerItem extends StatelessWidget {
                   color: AppColors.secondary,
                   shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 18,
-                  minHeight: 18,
-                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                 child: Text(
                   badge! > 9 ? '9+' : badge.toString(),
                   style: const TextStyle(
@@ -871,9 +902,7 @@ class _DrawerItem extends StatelessWidget {
       ),
       selected: isActive,
       selectedTileColor: AppColors.secondary.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: onTap,
     );
   }
