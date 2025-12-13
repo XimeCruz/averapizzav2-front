@@ -16,7 +16,6 @@ import '../screens/cajero/pedidos_listos_screen.dart';
 import '../screens/cajero/pedidos_pendientes_screen.dart';
 import '../providers/ui_provider.dart';
 
-
 /// Layout reutilizable para todas las pantallas de cajero
 /// Incluye sidebar colapsable para desktop y drawer para mobile
 class CajeroLayout extends StatefulWidget {
@@ -64,14 +63,14 @@ class _CajeroLayoutState extends State<CajeroLayout> {
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
+      (route) => false,
     );
   }
 
   @override
-   Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final uiProvider = context.watch<UiProvider>(); 
+    final uiProvider = context.watch<UiProvider>();
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1024;
 
@@ -88,20 +87,20 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                   color: Colors.white70,
                 ),
                 onPressed: () => context.read<UiProvider>().toggleSidebar(),
-                tooltip: uiProvider.isSidebarExpanded ? 'Colapsar menú' : 'Expandir menú',
+                tooltip: uiProvider.isSidebarExpanded
+                    ? 'Colapsar menú'
+                    : 'Expandir menú',
               )
             : null,
         automaticallyImplyLeading: !isDesktop,
-        title: Text(
-          widget.title,
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
         actions: widget.actions ?? [],
       ),
       floatingActionButton: widget.floatingActionButton,
       body: Row(
         children: [
-          if (isDesktop) _buildCollapsibleSidebar(context, authProvider, uiProvider),
+          if (isDesktop)
+            _buildCollapsibleSidebar(context, authProvider, uiProvider),
           Expanded(child: widget.child),
         ],
       ),
@@ -109,19 +108,18 @@ class _CajeroLayoutState extends State<CajeroLayout> {
   }
 
   // Sidebar colapsable
-  Widget _buildCollapsibleSidebar(BuildContext context, AuthProvider authProvider,  UiProvider uiProvider) {
+  Widget _buildCollapsibleSidebar(
+    BuildContext context,
+    AuthProvider authProvider,
+    UiProvider uiProvider,
+  ) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       width: uiProvider.isSidebarExpanded ? 280 : 72,
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
-        border: Border(
-          right: BorderSide(
-            color: Color(0xFF2A2A2A),
-            width: 1,
-          ),
-        ),
+        border: Border(right: BorderSide(color: Color(0xFF2A2A2A), width: 1)),
       ),
       child: Column(
         children: [
@@ -140,7 +138,9 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(uiProvider.isSidebarExpanded ? 16 : 12),
+                    borderRadius: BorderRadius.circular(
+                      uiProvider.isSidebarExpanded ? 16 : 12,
+                    ),
                   ),
                   child: Icon(
                     Icons.point_of_sale,
@@ -345,10 +345,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: Color(0xFF2A2A2A),
-                    width: 1,
-                  ),
+                  top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
                 ),
               ),
               child: Column(
@@ -360,81 +357,115 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                       color: const Color(0xFF2A2A2A),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.secondary,
-                          child: Text(
-                            (authProvider.userName?.substring(0, 1) ?? 'C').toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final showText =
+                            uiProvider.isSidebarExpanded &&
+                            constraints.maxWidth > 220;
+
+                        if (showText) {
+                          return Column(
+                            spacing: 20,
                             children: [
-                              Text(
-                                authProvider.userName ?? 'Cajero',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Cajero',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
-                                ),
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: AppColors.secondary,
+                                    child: Text(
+                                      (authProvider.userName?.substring(0, 1) ??
+                                              'C')
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          authProvider.userName ?? 'Cajero',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          'Cajero',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.5,
+                                            ),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ), // Botones de acción
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        // Actualizar datos
+                                        context
+                                            .read<PedidoProvider>()
+                                            .loadPedidosPendientes();
+                                        context
+                                            .read<PedidoProvider>()
+                                            .loadPedidosEnPreparacion();
+                                        context
+                                            .read<PedidoProvider>()
+                                            .loadPedidosByEstado(
+                                              EstadoPedido.LISTO,
+                                            );
+                                      },
+                                      icon: const Icon(Icons.refresh, size: 16),
+                                      label: const Text('Actualizar'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.white70,
+                                        side: const BorderSide(
+                                          color: Color.fromARGB(255, 29, 29, 29),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  OutlinedButton(
+                                    onPressed: _logout,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.error,
+                                      side: BorderSide(
+                                        color: AppColors.error.withOpacity(0.3),
+                                      ),
+                                      padding: const EdgeInsets.all(12),
+                                    ),
+                                    child: const Icon(Icons.logout, size: 18),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                        ),
-                      ],
+                          );
+                        }
+
+                        return SizedBox.shrink();
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Botones de acción
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            // Actualizar datos
-                            context.read<PedidoProvider>().loadPedidosPendientes();
-                            context.read<PedidoProvider>().loadPedidosEnPreparacion();
-                            context.read<PedidoProvider>().loadPedidosByEstado(EstadoPedido.LISTO);
-                          },
-                          icon: const Icon(Icons.refresh, size: 16),
-                          label: const Text('Actualizar'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white70,
-                            side: const BorderSide(color: Color(0xFF2A2A2A)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      OutlinedButton(
-                        onPressed: _logout,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                          side: BorderSide(color: AppColors.error.withOpacity(0.3)),
-                          padding: const EdgeInsets.all(12),
-                        ),
-                        child: const Icon(Icons.logout, size: 18),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             )
@@ -443,10 +474,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: Color(0xFF2A2A2A),
-                    width: 1,
-                  ),
+                  top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
                 ),
               ),
               child: Column(
@@ -455,7 +483,8 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                     backgroundColor: AppColors.secondary,
                     radius: 20,
                     child: Text(
-                      (authProvider.userName?.substring(0, 1) ?? 'C').toUpperCase(),
+                      (authProvider.userName?.substring(0, 1) ?? 'C')
+                          .toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -464,11 +493,17 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                   ),
                   const SizedBox(height: 16),
                   IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white70, size: 20),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
                     onPressed: () {
                       context.read<PedidoProvider>().loadPedidosPendientes();
                       context.read<PedidoProvider>().loadPedidosEnPreparacion();
-                      context.read<PedidoProvider>().loadPedidosByEstado(EstadoPedido.LISTO);
+                      context.read<PedidoProvider>().loadPedidosByEstado(
+                        EstadoPedido.LISTO,
+                      );
                     },
                     tooltip: 'Actualizar',
                     padding: EdgeInsets.zero,
@@ -476,7 +511,11 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                   ),
                   const SizedBox(height: 16),
                   IconButton(
-                    icon: const Icon(Icons.logout, color: AppColors.error, size: 20),
+                    icon: const Icon(
+                      Icons.logout,
+                      color: AppColors.error,
+                      size: 20,
+                    ),
                     onPressed: _logout,
                     tooltip: 'Cerrar Sesión',
                     padding: EdgeInsets.zero,
@@ -532,10 +571,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                 const SizedBox(height: 4),
                 Text(
                   authProvider.userName ?? 'Cajero',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
@@ -735,81 +771,74 @@ class _SidebarItem extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: 
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final showText = isExpanded && constraints.maxWidth > 180;
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final showText = isExpanded && constraints.maxWidth > 220;
 
-                    return(
-                      Row(
+                  return (Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
                         children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Icon(
-                                icon,
-                                color: isAction
-                                    ? AppColors.secondary
-                                    : isActive
-                                    ? AppColors.secondary
-                                    : Colors.white70,
-                                size: 24,
-                              ),
-                              if (badge != null && badge! > 0)
-                                Positioned(
-                                  right: -6,
-                                  top: -6,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: badgeColor ?? AppColors.error,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 18,
-                                      minHeight: 18,
-                                    ),
-                                    child: Text(
-                                      badge! > 9 ? '9+' : badge.toString(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                          Icon(
+                            size: showText ? 28 : 21,
+                            icon,
+                            color: isAction
+                                ? AppColors.secondary
+                                : isActive
+                                ? AppColors.secondary
+                                : Colors.white70,
                           ),
-                          if (showText) ...[
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: TextStyle(
-                                  color: isAction
-                                      ? AppColors.secondary
-                                      : isActive
-                                      ? AppColors.secondary
-                                      : Colors.white70,
-                                  fontWeight: isAction || isActive ? FontWeight.w600 : FontWeight.normal,
+                          if (badge != null && badge! > 0)
+                            Positioned(
+                              right: -6,
+                              top: -6,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: badgeColor ?? AppColors.error,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 18,
+                                  minHeight: 18,
+                                ),
+                                child: Text(
+                                  badge! > 9 ? '9+' : badge.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
-                          ],
                         ],
-                      )
-                    );
-                      
-                  }
-                )
-              
-              
-              
-              
-              
-              
+                      ),
+                      if (showText) ...[
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              color: isAction
+                                  ? AppColors.secondary
+                                  : isActive
+                                  ? AppColors.secondary
+                                  : Colors.white70,
+                              fontWeight: isAction || isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ));
+                },
+              ),
             ),
           ),
         ),
@@ -861,10 +890,7 @@ class _DrawerItem extends StatelessWidget {
                   color: AppColors.error,
                   shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 18,
-                  minHeight: 18,
-                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                 child: Text(
                   badge! > 9 ? '9+' : badge.toString(),
                   style: const TextStyle(
@@ -882,14 +908,14 @@ class _DrawerItem extends StatelessWidget {
         title,
         style: TextStyle(
           color: color,
-          fontWeight: isActive || isAction ? FontWeight.w600 : FontWeight.normal,
+          fontWeight: isActive || isAction
+              ? FontWeight.w600
+              : FontWeight.normal,
         ),
       ),
       selected: isActive,
       selectedTileColor: AppColors.secondary.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: onTap,
     );
   }
