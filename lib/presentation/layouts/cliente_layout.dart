@@ -677,6 +677,8 @@ class _SidebarItem extends StatelessWidget {
   final String title;
   final bool isActive;
   final bool isExpanded;
+  final int? badge;
+  final Color? badgeColor;
   final VoidCallback onTap;
 
   const _SidebarItem({
@@ -684,6 +686,8 @@ class _SidebarItem extends StatelessWidget {
     required this.title,
     this.isActive = false,
     required this.isExpanded,
+    this.badge,
+    this.badgeColor,
     required this.onTap,
   });
 
@@ -698,9 +702,7 @@ class _SidebarItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Tooltip(
             message: isExpanded ? '' : title,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
+            child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: isExpanded ? 16 : 8,
                 vertical: 12,
@@ -717,45 +719,82 @@ class _SidebarItem extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // 👇 CLAVE: solo mostrar texto cuando el ancho REAL existe
-                  final showText =
-                      isExpanded && constraints.maxWidth > 180;
-
-                  return Row(
-                    children: [
-                      Icon(
-                        icon,
-                        color: isActive
-                            ? AppColors.secondary
-                            : Colors.white60,
-                        size: isExpanded ? 20 : 24,
+              child: isExpanded
+                  ? Row(
+                children: [
+                  Icon(
+                    icon,
+                    color: isActive ? AppColors.secondary : Colors.white60,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: isActive ? AppColors.secondary : Colors.white70,
+                        fontSize: 14,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                       ),
-
-                      if (showText) const SizedBox(width: 12),
-
-                      if (showText)
-                        SizedBox(
-                          width: constraints.maxWidth - 72,
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: isActive
-                                  ? AppColors.secondary
-                                  : Colors.white70,
-                              fontSize: 14,
-                              fontWeight: isActive
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                            ),
-                          ),
+                    ),
+                  ),
+                  if (badge != null && badge! > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeColor ?? AppColors.error,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        badge.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
                         ),
-                    ],
-                  );
-                },
+                      ),
+                    ),
+                ],
+              )
+                  : Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Center(
+                    child: Icon(
+                      icon,
+                      color: isActive ? AppColors.secondary : Colors.white60,
+                      size: 24,
+                    ),
+                  ),
+                  if (badge != null && badge! > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: badgeColor ?? AppColors.error,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          badge! > 9 ? '9+' : badge.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
