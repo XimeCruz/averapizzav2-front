@@ -93,7 +93,7 @@ class ApiConstants {
   static const String inventarioBajoStock = '$apiVersion/reportes/inventario/bajo-stock';
 
   // ========== DASHBOARD ENDPOINTS ==========
-  static const String dashboard = '$apiVersion/admin/dashboard';
+  static const String dashboard = '$apiVersion/dashboard/metricas-generales';
 
   // ========== VENTAS ENDPOINTS ==========
   static const String ventas = '$apiVersion/ventas';

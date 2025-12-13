@@ -222,7 +222,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _ModernStatCard(
                   title: 'Tasa de Entrega',
-                  value: '${((data.totalVentas > 0 ? (data.totalVentas - data.pedidosPendientes) / data.totalVentas : 0) * 100).toStringAsFixed(1)}%',
+                  value: '${((data.tasaEntrega)).toStringAsFixed(2)}',
                   icon: Icons.trending_up,
                   color: const Color(0xFF10B981),
                   gradientColors: const [
@@ -232,7 +232,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _ModernStatCard(
                   title: 'Total Productos',
-                  value: '1',
+                  value: '${data.totalProductos}',
                   icon: Icons.inventory_2_outlined,
                   color: const Color(0xFF8B5CF6),
                   gradientColors: const [
@@ -307,7 +307,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _TransactionStateCard(
                   title: 'Entregadas',
-                  value: '${data.insumosBajoStock}',
+                  value: '${data.pedidosEntregados}',
                   subtitle: 'Pedidos',
                   icon: Icons.check_circle_outline,
                   color: const Color(0xFF10B981),

@@ -8,10 +8,15 @@ enum DashboardStatus { initial, loading, loaded, error }
 
 class DashboardData {
   final int totalVentas;
+  final double tasaEntrega;
+  final int totalProductos;
+  final int insumosBajoStock;
+
   final double montoTotal;
   final int pedidosPendientes;
   final int pedidosEnPreparacion;
-  final int insumosBajoStock;
+  final int pedidosEntregados;
+
   final List<ProductoMasVendido> productosMasVendidos;
 
   DashboardData({
@@ -21,15 +26,23 @@ class DashboardData {
     required this.pedidosEnPreparacion,
     required this.insumosBajoStock,
     this.productosMasVendidos = const [],
+    required this.tasaEntrega,
+    required this.totalProductos,
+    required this.pedidosEntregados,
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
     return DashboardData(
-      totalVentas: json['totalVentas'] ?? 0,
-      montoTotal: (json['montoTotal'] ?? 0).toDouble(),
-      pedidosPendientes: json['pedidosPendientes'] ?? 0,
-      pedidosEnPreparacion: json['pedidosEnPreparacion'] ?? 0,
-      insumosBajoStock: json['insumosBajoStock'] ?? 0,
+      totalVentas: json['totalPedidos'] ?? 0,
+      tasaEntrega: (json['tasaEntrega'] ?? 0).toDouble(),
+      totalProductos: json['totalProductos'],
+      insumosBajoStock: json['alertasStock'] ?? 0,
+
+      montoTotal: (json['metricasDia']?['totalVentas'] ?? 0).toDouble(),
+      pedidosPendientes: json['metricasDia']?['pedidosPendientes'] ?? 0,
+      pedidosEnPreparacion:  json['metricasDia']?['pedidosEnPreparacion'] ?? 0,
+      pedidosEntregados: json['metricasDia']?['pedidosEntregados'] ?? 0,
+
       productosMasVendidos: (json['productosMasVendidos'] as List?)
           ?.map((e) => ProductoMasVendido.fromJson(e))
           .toList() ?? [],
