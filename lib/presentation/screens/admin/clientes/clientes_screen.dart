@@ -277,7 +277,7 @@ class _ClientesScreenState extends State<ClientesScreen> {
                 var clientes = provider.clientes;
 
                 // Filtrar solo clientes (excluir admin y cajero)
-                clientes = clientes.where((c) => c.tieneRol(RolNombre.CLIENTE)).toList();
+                //clientes = clientes.where((c) => c.tieneRol(RolNombre.CLIENTE)).toList();
 
                 // Filtrar por estado
                 if (_soloActivos) {

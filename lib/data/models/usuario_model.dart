@@ -12,6 +12,8 @@ class Usuario {
   final String correo;
   final bool activo;
   final List<Rol> roles;
+  final int? totalPedidos;
+  final double? totalGastado;
 
   Usuario({
     required this.id,
@@ -19,6 +21,8 @@ class Usuario {
     required this.correo,
     this.activo = true,
     this.roles = const [],
+    this.totalPedidos,
+    this.totalGastado,
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
@@ -30,6 +34,8 @@ class Usuario {
       roles: (json['roles'] as List?)
           ?.map((e) => Rol.fromJson(e))
           .toList() ?? [],
+      totalPedidos: json['totalPedidos'] as int?,
+      totalGastado: (json['totalGastado'] as num?)?.toDouble(),
     );
   }
 
@@ -39,6 +45,8 @@ class Usuario {
     'correo': correo,
     'activo': activo,
     'roles': roles.map((e) => e.toJson()).toList(),
+    if (totalPedidos != null) 'totalPedidos': totalPedidos,
+    if (totalGastado != null) 'totalGastado': totalGastado,
   };
 
   String getRolPrincipal() {
@@ -48,6 +56,11 @@ class Usuario {
 
   bool tieneRol(RolNombre rol) {
     return roles.any((r) => r.nombre == rol);
+  }
+
+  String getGastoFormateado() {
+    if (totalGastado == null) return '\$0.00';
+    return '\$${totalGastado!.toStringAsFixed(2)}';
   }
 }
 

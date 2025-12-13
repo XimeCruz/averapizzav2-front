@@ -16,7 +16,8 @@ class ApiConstants {
 
 
   // ========== USUARIOS ENDPOINTS ==========
-  static const String usuarios = '$apiVersion/admin/usuarios';
+  static const String usuarios = '$apiVersion/dashboard/clientes';
+  static const String usuariosEstadisticas = '$apiVersion/clientes/estadisticas';
   static String usuarioById(int id) => '$apiVersion/admin/usuarios/$id';
   static String toggleEstadoUsuario(int id) => '$apiVersion/admin/usuarios/$id/toggle-estado';
   static String usuariosByRol(String rol) => '$apiVersion/admin/usuarios/rol/$rol';

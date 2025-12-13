@@ -163,7 +163,7 @@ class ClienteDetailDialog extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   // ID
                   _InfoRow(

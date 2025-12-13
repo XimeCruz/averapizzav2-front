@@ -30,9 +30,9 @@ class UsuarioProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      final usuarios = await _repository.getClientes();
+      _clientes = await _repository.getClientes();
       // Filtrar solo clientes
-      _clientes = usuarios.where((u) => u.tieneRol(RolNombre.CLIENTE)).toList();
+      // _clientes = usuarios.where((u) => u.tieneRol(RolNombre.CLIENTE)).toList();
 
       _status = UsuarioStatus.loaded;
       notifyListeners();

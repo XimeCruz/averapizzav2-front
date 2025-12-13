@@ -8,7 +8,7 @@ class UsuarioRepository {
   // ========== USUARIOS/CLIENTES ==========
   Future<List<Usuario>> getClientes() async {
     try {
-      final response = await _apiClient.get('${ApiConstants.apiVersion}/admin/usuarios');
+      final response = await _apiClient.get('${ApiConstants.usuarios}');
       return (response.data as List)
           .map((e) => Usuario.fromJson(e))
           .toList();
