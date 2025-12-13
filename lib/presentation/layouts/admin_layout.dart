@@ -11,7 +11,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/admin/insumos/insumos_list_screen.dart';
 import '../screens/admin/productos/productos_list_screen.dart';
-import '../screens/cajero/pedidos_list_screen.dart';
+import '../screens/admin/pedidos/pedidos_list_screen.dart';
 import '../screens/admin/reportes/reportes_screen.dart';
 import '../providers/ui_provider.dart';
 

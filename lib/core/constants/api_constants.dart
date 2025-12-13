@@ -69,9 +69,9 @@ class ApiConstants {
       '$apiVersion/inventario/movimientos/insumo/$insumoId';
 
   // ========== PEDIDOS - CAJERO ENDPOINTS ==========
-  static const String pedidosCajero = '$apiVersion/cajero/pedidos';
+  static const String pedidosCajero = '$apiVersion/cajero/pedidos/hoy';
   static String pedidosByEstado(String estado) =>
-      '$apiVersion/cajero/pedidos?estado=$estado';
+      '$apiVersion/cajero/pedidos/estado/$estado';
   static String entregarPedido(int id) =>
       '$apiVersion/cajero/pedidos/$id/entregar';
   static String cancelarPedido(int id) =>

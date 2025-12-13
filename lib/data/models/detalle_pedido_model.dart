@@ -50,7 +50,7 @@ class DetallePedido {
       sabor2Id: json['sabor2Id'] ?? json['sabor2']?['id'],
       sabor3Id: json['sabor3Id'] ?? json['sabor3']?['id'],
       pesoKg: json['pesoKg'] != null ? (json['pesoKg'] as num).toDouble() : null,
-      productoNombre: json['producto']?['nombre'],
+      productoNombre: json['productoNombre'],
       presentacionNombre: json['presentacion']?['tipo'],
       sabor1Nombre: json['sabor1']?['nombre'],
       sabor2Nombre: json['sabor2']?['nombre'],

@@ -3,13 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../data/models/pedido_model.dart';
-import '../../providers/pedido_provider.dart';
-import '../../widgets/common/loading_widget.dart';
-import '../../layouts/admin_layout.dart';
-import 'pedido_detail_dialog.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../data/models/pedido_model.dart';
+import '../../../providers/pedido_provider.dart';
+import '../../../widgets/common/loading_widget.dart';
+import '../../../layouts/admin_layout.dart';
+import '../../cajero/pedido_detail_dialog.dart';
+
 
 class PedidosListScreen extends StatefulWidget {
   final EstadoPedido? estado;
@@ -236,7 +237,7 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
                     label: 'Pendientes',
                     isSelected: _selectedEstado == EstadoPedido.PENDIENTE,
                     count: context.watch<PedidoProvider>().pedidosPendientes.length,
-                    color: AppColors.warning,
+                    color: AppColors.pendiente,
                     onTap: () {
                       setState(() {
                         _selectedEstado = EstadoPedido.PENDIENTE;
@@ -249,7 +250,7 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
                     label: 'En Preparación',
                     isSelected: _selectedEstado == EstadoPedido.EN_PREPARACION,
                     count: context.watch<PedidoProvider>().pedidosEnPreparacion.length,
-                    color: AppColors.accent,
+                    color: AppColors.enPreparacion,
                     onTap: () {
                       setState(() {
                         _selectedEstado = EstadoPedido.EN_PREPARACION;
@@ -262,7 +263,7 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
                     label: 'Listos',
                     isSelected: _selectedEstado == EstadoPedido.LISTO,
                     count: context.watch<PedidoProvider>().pedidosListos.length,
-                    color: AppColors.primary,
+                    color: AppColors.listo,
                     onTap: () {
                       setState(() {
                         _selectedEstado = EstadoPedido.LISTO;
@@ -276,7 +277,7 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
                     isSelected: _selectedEstado == EstadoPedido.ENTREGADO,
                     count: context.watch<PedidoProvider>().pedidos
                         .where((p) => p.estado == EstadoPedido.ENTREGADO).length,
-                    color: AppColors.success,
+                    color: AppColors.entregado,
                     onTap: () {
                       setState(() {
                         _selectedEstado = EstadoPedido.ENTREGADO;
@@ -290,7 +291,7 @@ class _PedidosListScreenState extends State<PedidosListScreen> {
                     isSelected: _selectedEstado == EstadoPedido.CANCELADO,
                     count: context.watch<PedidoProvider>().pedidos
                         .where((p) => p.estado == EstadoPedido.CANCELADO).length,
-                    color: AppColors.error,
+                    color: AppColors.cancelado,
                     onTap: () {
                       setState(() {
                         _selectedEstado = EstadoPedido.CANCELADO;

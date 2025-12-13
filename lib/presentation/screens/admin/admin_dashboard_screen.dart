@@ -10,7 +10,7 @@ import '../../providers/pedido_provider.dart';
 import 'insumos/insumos_list_screen.dart';
 import 'productos/productos_list_screen.dart';
 import 'reportes/reportes_screen.dart';
-import '../cajero/pedidos_list_screen.dart';
+import 'pedidos/pedidos_list_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});

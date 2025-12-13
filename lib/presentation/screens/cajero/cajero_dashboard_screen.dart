@@ -7,7 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../layouts/cajero_layout.dart';
 import '../../providers/pedido_provider.dart';
 import 'crear_pedido_screen.dart';
-import 'pedidos_list_screen.dart';
+import '../admin/pedidos/pedidos_list_screen.dart';
 
 class CajeroDashboardScreen extends StatefulWidget {
   const CajeroDashboardScreen({super.key});

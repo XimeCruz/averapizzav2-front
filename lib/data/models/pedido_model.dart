@@ -25,14 +25,14 @@ class Pedido {
 
   factory Pedido.fromJson(Map<String, dynamic> json) {
     return Pedido(
-      id: json['id'],
-      usuarioId: json['usuarioId'] ?? 0,
-      usuarioNombre: json['usuarioNombre'],
+      id: json['pedidoId'],
+      usuarioId: json['idUsuario'] ?? 0,
+      usuarioNombre: json['nombreUsuario'],
       estado: _parseEstado(json['estado']),
       tipoServicio: _parseTipoServicio(json['tipoServicio']),
       fechaHora: DateTime.parse(json['fechaHora'] ?? DateTime.now().toIso8601String()),
       total: (json['total'] ?? 0).toDouble(),
-      detalles: (json['detalles'] as List?)
+      detalles: (json['items'] as List?)
           ?.map((e) => DetallePedido.fromJson(e))
           .toList() ?? [],
     );
