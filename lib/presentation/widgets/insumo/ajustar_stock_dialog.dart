@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/insumo_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/insumo_provider.dart';
 
 class AjustarStockDialog extends StatefulWidget {
@@ -42,18 +43,34 @@ class _AjustarStockDialogState extends State<AjustarStockDialog> {
     setState(() => _isLoading = true);
 
     final provider = context.read<InsumoProvider>();
+    final authProvider = context.read<AuthProvider>();
+
+    if (authProvider.userId == null) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Usuario no autenticado'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     // Si es salida, la cantidad debe ser negativa
     double cantidad = double.parse(_cantidadController.text);
-    if (_tipoMovimiento == TipoMovimiento.SALIDA) {
-      cantidad = -cantidad;
-    }
+    // if (_tipoMovimiento == TipoMovimiento.SALIDA) {
+    //   cantidad = -cantidad;
+    // }
 
     final success = await provider.ajustarStock(
       AjustarStockRequest(
         insumoId: widget.insumoId,
         cantidad: cantidad,
-        motivo: _motivoController.text.trim(),
+        tipoMovimiento: _tipoMovimiento.name,
+        referencia: _motivoController.text.trim(),
+        usuarioId: authProvider.userId!
       ),
     );
 

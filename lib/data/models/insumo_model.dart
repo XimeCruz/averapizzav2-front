@@ -138,7 +138,6 @@ class MovimientoInventario {
     'id': id,
     'tipoMovimiento': tipoMovimiento.name,
     'cantidad': cantidad,
-    'fechaHora': fechaHora.toIso8601String(),
     'referencia': referencia,
     'insumoId': insumoId,
     'usuarioId': usuarioId,
@@ -168,17 +167,23 @@ class MovimientoInventario {
 class AjustarStockRequest {
   final int insumoId;
   final double cantidad;
-  final String motivo;
+  final String tipoMovimiento;
+  final String referencia;
+  final int usuarioId;
 
   AjustarStockRequest({
     required this.insumoId,
     required this.cantidad,
-    required this.motivo,
+    required this.tipoMovimiento,
+    required this.referencia,
+    required this.usuarioId,
   });
 
   Map<String, dynamic> toJson() => {
     'insumoId': insumoId,
     'cantidad': cantidad,
-    'motivo': motivo,
+    'referencia': referencia,
+    'tipoMov': tipoMovimiento,
+    'usuarioId': usuarioId,
   };
 }

@@ -1,5 +1,7 @@
 // lib/data/repositories/insumo_repository.dart
 
+import 'package:dio/dio.dart';
+
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/insumo_model.dart';
@@ -79,6 +81,9 @@ class InsumoRepository {
       await _apiClient.post(
         ApiConstants.ajustarStock,
         data: request.toJson(),
+        options: Options(
+          responseType: ResponseType.plain,
+        ),
       );
     } catch (e) {
       throw Exception('Error al ajustar stock: ${e.toString()}');
