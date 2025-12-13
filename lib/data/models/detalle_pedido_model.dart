@@ -51,10 +51,10 @@ class DetallePedido {
       sabor3Id: json['sabor3Id'] ?? json['sabor3']?['id'],
       pesoKg: json['pesoKg'] != null ? (json['pesoKg'] as num).toDouble() : null,
       productoNombre: json['productoNombre'],
-      presentacionNombre: json['presentacion']?['tipo'],
-      sabor1Nombre: json['sabor1']?['nombre'],
-      sabor2Nombre: json['sabor2']?['nombre'],
-      sabor3Nombre: json['sabor3']?['nombre'],
+      presentacionNombre: json['presentacion'],
+      sabor1Nombre: json['sabor1'],
+      sabor2Nombre: json['sabor2'],
+      sabor3Nombre: json['sabor3'],
     );
   }
 
@@ -64,7 +64,7 @@ class DetallePedido {
       'cantidad': cantidad,
       'subtotal': subtotal,
       'precioUnitario': precioUnitario,
-      'presentacionId': presentacionId,
+      'presentacion': presentacionNombre,
       'sabor1Id': sabor1Id,
     };
 

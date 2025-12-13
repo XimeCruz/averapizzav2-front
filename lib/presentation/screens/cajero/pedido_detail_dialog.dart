@@ -315,7 +315,7 @@ class _DetalleCard extends StatelessWidget {
                           ),
                           const Text(' • '),
                           Text(
-                            'Precio: Bs. ${detalle.precioUnitario.toStringAsFixed(2)}',
+                            'Presentacion: ${detalle.presentacionNombre}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
