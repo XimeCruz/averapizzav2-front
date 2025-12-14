@@ -8,12 +8,14 @@ import '../../../data/models/producto_model.dart';
 class SelectorSaboresDialog extends StatefulWidget {
   final List<ProductoDto> saboresDisponibles;
   final String presentacion;
+  final List<ProductoDto>? saboresPreseleccionados;
   final Function(List<ProductoDto>) onConfirmar;
 
   const SelectorSaboresDialog({
     super.key,
     required this.saboresDisponibles,
     required this.presentacion,
+    this.saboresPreseleccionados,
     required this.onConfirmar,
   });
 
@@ -22,7 +24,16 @@ class SelectorSaboresDialog extends StatefulWidget {
 }
 
 class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
-  final List<ProductoDto> _saboresSeleccionados = [];
+  late final List<ProductoDto> _saboresSeleccionados;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar con los sabores preseleccionados si existen
+    _saboresSeleccionados = widget.saboresPreseleccionados != null
+        ? List<ProductoDto>.from(widget.saboresPreseleccionados!)
+        : [];
+  }
 
   int get _maxSabores {
     switch (widget.presentacion) {
@@ -358,6 +369,15 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
                     onPressed: _saboresSeleccionados.isEmpty
                         ? null
                         : () {
+                      // Debug: Verificar qué se está retornando
+                      print('\n=== DEBUG SELECTOR SABORES ===');
+                      print('Sabores seleccionados (${_saboresSeleccionados.length}):');
+                      for (var sabor in _saboresSeleccionados) {
+                        print('  - ${sabor.nombre} (ID: ${sabor.id})');
+                      }
+                      print('IDs: ${_saboresSeleccionados.map((s) => s.id).toList()}');
+                      print('================================\n');
+
                       widget.onConfirmar(_saboresSeleccionados);
                       Navigator.pop(context);
                     },

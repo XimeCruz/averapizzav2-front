@@ -28,7 +28,12 @@ class ItemPedido {
     this.saborId,
     this.saboresIds,
     this.pesoKg,
-  });
+  }){
+    print('ItemPedido Constructor:');
+    print('  - nombre: $nombre');
+    print('  - saboresIds recibidos: $saboresIds');
+    print('  - tipo: $tipoProducto');
+  }
 
   // Para convertir a DetallePedidoRequest (bebidas)
   Map<String, dynamic> toDetalleJson() {

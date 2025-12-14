@@ -90,15 +90,48 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
         return;
       }
 
+      // Buscar si ya existe una pizza con esta presentación en el carrito
+      // para editar sus sabores
+      List<ProductoDto>? saboresPreseleccionados;
+      ItemPedido? itemExistente;
+
+      // Buscar items con la misma presentación
+      final itemsConMismaPresentacion = _items.where(
+              (item) => item.presentacionId == producto.presentacionId &&
+              item.tipoProducto == 'PIZZA'
+      ).toList();
+
+      if (itemsConMismaPresentacion.isNotEmpty) {
+        // Si ya existe, usar el primero encontrado
+        itemExistente = itemsConMismaPresentacion.first;
+
+        // Reconstruir la lista de sabores preseleccionados
+        if (itemExistente.saboresIds != null && itemExistente.saboresIds!.isNotEmpty) {
+          saboresPreseleccionados = itemExistente.saboresIds!
+              .map((id) => sabores.firstWhere(
+                (s) => s.id == id,
+            orElse: () => sabores.first,
+          ))
+              .toList();
+        }
+      }
+
       // Mostrar diálogo de selección de sabores
       await showDialog(
         context: context,
         builder: (context) => SelectorSaboresDialog(
           saboresDisponibles: sabores,
           presentacion: _categoriaSeleccionada!,
+          saboresPreseleccionados: saboresPreseleccionados,
           onConfirmar: (saboresSeleccionados) {
             // Agregar la pizza con los sabores seleccionados
             final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
+
+            // Debug: Verificar que los IDs se están guardando
+            print('=== DEBUG AGREGAR PIZZA ===');
+            print('Sabores seleccionados: ${saboresSeleccionados.map((s) => s.nombre).join(", ")}');
+            print('IDs de sabores: $saboresIds');
+            print('Cantidad de sabores: ${saboresIds.length}');
 
             // Calcular el precio PROMEDIANDO los sabores seleccionados
             final precioTotal = saboresSeleccionados.fold<double>(
@@ -115,24 +148,41 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             setState(() {
               // Crear identificador único con los sabores ordenados
               final uniqueId = '${producto.presentacionId}_${saboresIds.join('_')}';
+
+              // Si es una edición, remover el item anterior
+              if (itemExistente != null) {
+                _items.removeWhere((item) => item.uniqueId == itemExistente!.uniqueId);
+              }
+
+              // Buscar si ya existe este mismo pedido (misma combinación de sabores)
               final index = _items.indexWhere((item) => item.uniqueId == uniqueId);
 
               if (index >= 0) {
+                // Si ya existe con la misma combinación, incrementar cantidad
                 _items[index].cantidad++;
               } else {
-                _items.add(ItemPedido(
+                // Agregar nuevo item
+                final nuevoItem = ItemPedido(
                   id: saboresSeleccionados.first.id,
                   presentacionId: producto.presentacionId,
                   uniqueId: uniqueId,
                   nombre: nombrePizza,
                   precio: precioPromedio, // Precio promediado
-                  cantidad: 1,
+                  cantidad: itemExistente?.cantidad ?? 1, // Mantener la cantidad si estaba editando
                   categoria: categoria,
                   presentacion: producto.presentacion,
                   tipoProducto: producto.tipoProducto,
                   saborId: saboresSeleccionados.first.id,
-                  saboresIds: saboresIds,
-                ));
+                  saboresIds: saboresIds, // IMPORTANTE: Guardar todos los IDs
+                );
+
+                // Debug: Verificar el item creado
+                print('Item creado:');
+                print('  - saboresIds: ${nuevoItem.saboresIds}');
+                print('  - presentacionId: ${nuevoItem.presentacionId}');
+                print('===========================');
+
+                _items.add(nuevoItem);
               }
             });
           },
@@ -162,6 +212,85 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
         }
       });
     }
+  }
+
+  void _editarSaboresPizza(int index) async {
+    final item = _items[index];
+
+    if (item.tipoProducto != 'PIZZA') return;
+
+    // Obtener la categoría de la pizza
+    String? categoria;
+    if (item.presentacion == 'PESO') categoria = 'PESO';
+    else if (item.presentacion == 'REDONDA') categoria = 'REDONDA';
+    else if (item.presentacion == 'BANDEJA') categoria = 'BANDEJA';
+
+    if (categoria == null) return;
+
+    final sabores = _productos[categoria] ?? [];
+    if (sabores.isEmpty) return;
+
+    // Reconstruir los sabores preseleccionados
+    List<ProductoDto>? saboresPreseleccionados;
+    if (item.saboresIds != null && item.saboresIds!.isNotEmpty) {
+      saboresPreseleccionados = item.saboresIds!
+          .map((id) => sabores.firstWhere(
+            (s) => s.id == id,
+        orElse: () => sabores.first,
+      ))
+          .toList();
+    }
+
+    // Mostrar diálogo
+    await showDialog(
+      context: context,
+      builder: (context) => SelectorSaboresDialog(
+        saboresDisponibles: sabores,
+        presentacion: categoria!,
+        saboresPreseleccionados: saboresPreseleccionados,
+        onConfirmar: (saboresSeleccionados) {
+          final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
+          final precioTotal = saboresSeleccionados.fold<double>(
+            0.0,
+                (sum, sabor) => sum + sabor.precio,
+          );
+          final precioPromedio = precioTotal / saboresSeleccionados.length;
+          String nombrePizza = saboresSeleccionados
+              .map((s) => s.nombre)
+              .join(' + ');
+
+          setState(() {
+            final uniqueId = '${item.presentacionId}_${saboresIds.join('_')}';
+
+            // Buscar si ya existe otra pizza con esta combinación
+            final existingIndex = _items.indexWhere(
+                    (i) => i.uniqueId == uniqueId && _items.indexOf(i) != index
+            );
+
+            if (existingIndex >= 0) {
+              // Si ya existe, sumar las cantidades y remover el item actual
+              _items[existingIndex].cantidad += item.cantidad;
+              _items.removeAt(index);
+            } else {
+              // Actualizar el item actual
+              _items[index] = ItemPedido(
+                id: saboresSeleccionados.first.id,
+                presentacionId: item.presentacionId,
+                uniqueId: uniqueId,
+                nombre: nombrePizza,
+                precio: precioPromedio,
+                cantidad: item.cantidad,
+                categoria: item.categoria,
+                presentacion: item.presentacion,
+                tipoProducto: item.tipoProducto,
+                saborId: saboresSeleccionados.first.id,
+                saboresIds: saboresIds,
+              );
+            }
+          });
+        },
+      ),
+    );
   }
 
   void _actualizarCantidad(int index, int delta) {
@@ -479,22 +608,18 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             itemBuilder: (context, index) {
               final producto = productos[index];
               final uniqueId = '${producto.id}_${producto.presentacionId}';
-              final cantidadEnCarrito = _items
-                  .firstWhere(
-                    (item) => item.uniqueId == uniqueId,
-                orElse: () => ItemPedido(
-                  id: 0,
-                  presentacionId: 0,
-                  uniqueId: '',
-                  nombre: '',
-                  precio: 0,
-                  cantidad: 0,
-                  categoria: '',
-                  presentacion: '',
-                  tipoProducto: '',
-                ),
-              )
-                  .cantidad;
+
+              // Buscar cantidad en carrito SIN crear item vacío
+              int cantidadEnCarrito = 0;
+              try {
+                final itemEnCarrito = _items.firstWhere(
+                      (item) => item.uniqueId == uniqueId,
+                );
+                cantidadEnCarrito = itemEnCarrito.cantidad;
+              } catch (e) {
+                // No existe en el carrito
+                cantidadEnCarrito = 0;
+              }
 
               return _ProductCard(
                 nombre: producto.nombre,
@@ -529,22 +654,18 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
               itemBuilder: (context, index) {
                 final bebida = _bebidas[index];
                 final uniqueId = '${bebida.id}_${bebida.presentacionId}';
-                final cantidadEnCarrito = _items
-                    .firstWhere(
-                      (item) => item.uniqueId == uniqueId,
-                  orElse: () => ItemPedido(
-                    id: 0,
-                    presentacionId: 0,
-                    uniqueId: '',
-                    nombre: '',
-                    precio: 0,
-                    cantidad: 0,
-                    categoria: '',
-                    presentacion: '',
-                    tipoProducto: '',
-                  ),
-                )
-                    .cantidad;
+
+                // Buscar cantidad en carrito SIN crear item vacío
+                int cantidadEnCarrito = 0;
+                try {
+                  final itemEnCarrito = _items.firstWhere(
+                        (item) => item.uniqueId == uniqueId,
+                  );
+                  cantidadEnCarrito = itemEnCarrito.cantidad;
+                } catch (e) {
+                  // No existe en el carrito
+                  cantidadEnCarrito = 0;
+                }
 
                 return _ProductCard(
                   nombre: bebida.nombre,
@@ -655,6 +776,9 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                 onIncrease: () => _actualizarCantidad(index, 1),
                 onDecrease: () => _actualizarCantidad(index, -1),
                 onDelete: () => _actualizarCantidad(index, -item.cantidad),
+                onEdit: item.tipoProducto == 'PIZZA'
+                    ? () => _editarSaboresPizza(index)
+                    : null,
               );
             },
           ),
@@ -729,34 +853,67 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                   ),
                 ],
               ),
+              // Botones
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _items.isEmpty ? null : _irACobro,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    disabledBackgroundColor: Colors.grey.shade800,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              Row(
+                children: [
+                  // Botón de debug (temporal)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        print('\n=== DEBUG ITEMS EN CARRITO ===');
+                        for (var item in _items) {
+                          print('Item: ${item.nombre}');
+                          print('  - uniqueId: ${item.uniqueId}');
+                          print('  - saboresIds: ${item.saboresIds}');
+                          print('  - tipoProducto: ${item.tipoProducto}');
+                          print('  - presentacionId: ${item.presentacionId}');
+                          print('---');
+                        }
+                        print('==============================\n');
+                      },
+                      icon: const Icon(Icons.bug_report, size: 16),
+                      label: const Text('Debug', style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.payment, size: 24),
-                      SizedBox(width: 12),
-                      Text(
-                        'Ir a Cobrar',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _items.isEmpty ? null : _irACobro,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondary,
+                          disabledBackgroundColor: Colors.grey.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.payment, size: 24),
+                            SizedBox(width: 12),
+                            Text(
+                              'Ir a Cobrar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -964,12 +1121,14 @@ class _CartItem extends StatelessWidget {
   final VoidCallback onIncrease;
   final VoidCallback onDecrease;
   final VoidCallback onDelete;
+  final VoidCallback? onEdit;
 
   const _CartItem({
     required this.item,
     required this.onIncrease,
     required this.onDecrease,
     required this.onDelete,
+    this.onEdit,
   });
 
   @override
@@ -1009,6 +1168,17 @@ class _CartItem extends StatelessWidget {
                   ],
                 ),
               ),
+              // Botón de editar sabores (solo para pizzas)
+              if (onEdit != null)
+                IconButton(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, color: AppColors.warning),
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Editar sabores',
+                ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline, color: AppColors.error),

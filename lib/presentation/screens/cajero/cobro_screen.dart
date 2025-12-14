@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
@@ -30,13 +31,13 @@ class _CobroScreenState extends State<CobroScreen> {
   final TextEditingController _numeroMesaController = TextEditingController();
   bool _procesandoPago = false;
 
-// TODO: Obtener el usuarioId del usuario logueado
+  // TODO: Obtener el usuarioId del usuario logueado
   final int _usuarioId = 1; // Temporal - debería venir de SharedPreferences o estado global
 
   @override
   void initState() {
     super.initState();
-// Listener para actualizar el estado cuando cambien los valores
+    // Listener para actualizar el estado cuando cambien los valores
     _montoRecibidoController.addListener(() {
       if (mounted) setState(() {});
     });
@@ -62,23 +63,21 @@ class _CobroScreenState extends State<CobroScreen> {
   }
 
   bool get _puedeConfirmar {
-// Debe tener método de pago seleccionado
+    // Debe tener método de pago seleccionado
     if (_metodoPagoSeleccionado == null) return false;
 
-// Si es servicio en mesa, debe tener número de mesa
+    // Si es servicio en mesa, debe tener número de mesa
     if (_tipoServicioSeleccionado == TipoServicio.MESA &&
-        _numeroMesaController.text
-            .trim()
-            .isEmpty) {
+        _numeroMesaController.text.trim().isEmpty) {
       return false;
     }
 
-// Si es efectivo, debe tener monto suficiente
+    // Si es efectivo, debe tener monto suficiente
     if (_metodoPagoSeleccionado == MetodoPago.EFECTIVO) {
       return _montoRecibido >= _total;
     }
 
-// Para QR y Tarjeta, solo necesita método seleccionado
+    // Para QR y Tarjeta, solo necesita método seleccionado
     return true;
   }
 
@@ -96,53 +95,91 @@ class _CobroScreenState extends State<CobroScreen> {
     setState(() => _procesandoPago = true);
 
     try {
-// Separar pizzas y otros productos (bebidas)
+      // Separar pizzas y otros productos (bebidas)
       final pizzas = widget.items.where((item) => item.esPizza).toList();
       final bebidas = widget.items.where((item) => !item.esPizza).toList();
 
-// Crear request
+      // Debug: Imprimir información de las pizzas
+      print('=== DEBUG PEDIDO ===');
+      print('Total de pizzas: ${pizzas.length}');
+      for (var pizza in pizzas) {
+        print('Pizza: ${pizza.nombre}');
+        print('  - Sabor IDs: ${pizza.saboresIds}');
+        print('  - Presentación ID: ${pizza.presentacionId}');
+        print('  - Cantidad: ${pizza.cantidad}');
+      }
+
+      // Crear request
       final request = CreatePedidoRequest(
         usuarioId: _usuarioId,
         tipoServicio: _tipoServicioSeleccionado,
         metodoPago: _convertirMetodoPago(_metodoPagoSeleccionado!),
-        detalles: bebidas.map((item) =>
-            DetallePedidoRequest(
-              productoId: item.id,
-              presentacionId: item.presentacionId,
-              saborId: item.saborId ?? 0,
-              cantidad: item.cantidad,
-            )).toList(),
-        pizzas: pizzas.map((item) =>
-            PizzaPedidoItem(
-              presentacionId: item.presentacionId,
-              sabor1Id: item.saborId ?? item.id,
-              sabor2Id: 0,
-              sabor3Id: 0,
-              pesoKg: item.pesoKg,
-              cantidad: item.cantidad,
-            )).toList(),
+        detalles: bebidas.map((item) => DetallePedidoRequest(
+          productoId: item.id,
+          presentacionId: item.presentacionId,
+          saborId: item.saborId ?? 0,
+          cantidad: item.cantidad,
+        )).toList(),
+        pizzas: pizzas.map((item) {
+          // Obtener los IDs de sabores
+          final saboresIds = item.saboresIds ?? [item.saborId ?? item.id];
+
+          // Debug detallado
+          print('Procesando pizza: ${item.nombre}');
+          print('  - item.saboresIds original: ${item.saboresIds}');
+          print('  - saboresIds a usar: $saboresIds');
+          print('  - Longitud de saboresIds: ${saboresIds.length}');
+
+          // Asignar sabores con verificación
+          final sabor1 = saboresIds.isNotEmpty ? saboresIds[0] : item.id;
+          final sabor2 = saboresIds.length > 1 ? saboresIds[1] : 0;
+          final sabor3 = saboresIds.length > 2 ? saboresIds[2] : 0;
+
+          print('  - Valores asignados:');
+          print('    * sabor1Id: $sabor1');
+          print('    * sabor2Id: $sabor2');
+          print('    * sabor3Id: $sabor3');
+
+          final pizzaItem = PizzaPedidoItem(
+            presentacionId: item.presentacionId,
+            sabor1Id: sabor1,
+            sabor2Id: sabor2,
+            sabor3Id: sabor3,
+            pesoKg: item.pesoKg,
+            cantidad: item.cantidad,
+          );
+
+          // Debug: Imprimir pizza a enviar
+          print('Pizza Item creado:');
+          print('  - toJson: ${pizzaItem.toJson()}');
+
+          return pizzaItem;
+        }).toList(),
       );
 
-// Enviar pedido al backend
+      // Debug: Imprimir request completo
+      print('Request JSON: ${request.toJson()}');
+      print('===================');
+
+      // Enviar pedido al backend
       final pedido = await _pedidoRepository.createPedido(request);
 
       if (!mounted) return;
 
-// Mostrar confirmación
+      // Mostrar confirmación
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) =>
-            _SuccessDialog(
-              pedidoId: pedido.id ?? 0,
-              total: _total,
-              metodoPago: _metodoPagoSeleccionado!,
-              vuelto: _vuelto,
-              tipoServicio: _tipoServicioSeleccionado,
-              numeroMesa: _numeroMesaController.text,
-            ),
+        builder: (context) => _SuccessDialog(
+          pedidoId: pedido.id ?? 0,
+          total: _total,
+          metodoPago: _metodoPagoSeleccionado!,
+          vuelto: _vuelto,
+          tipoServicio: _tipoServicioSeleccionado,
+          numeroMesa: _numeroMesaController.text,
+        ),
       ).then((_) {
-// Volver al dashboard
+        // Volver al dashboard
         Navigator.of(context).popUntil((route) => route.isFirst);
       });
     } catch (e) {
@@ -176,9 +213,7 @@ class _CobroScreenState extends State<CobroScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery
-        .of(context)
-        .size;
+    final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1024;
 
     return CajeroLayout(
@@ -195,29 +230,29 @@ class _CobroScreenState extends State<CobroScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-// Tipo de servicio
+                    // Tipo de servicio
                     _buildServiceType(),
                     const SizedBox(height: 24),
 
-// Número de mesa si es MESA
+                    // Número de mesa si es MESA
                     if (_tipoServicioSeleccionado == TipoServicio.MESA)
                       _buildTableNumber(),
                     if (_tipoServicioSeleccionado == TipoServicio.MESA)
                       const SizedBox(height: 24),
 
-// Métodos de pago
+                    // Métodos de pago
                     _buildPaymentMethods(),
                     const SizedBox(height: 24),
 
-// Campo de monto si es efectivo
+                    // Campo de monto si es efectivo
                     if (_metodoPagoSeleccionado == MetodoPago.EFECTIVO)
                       _buildCashPayment(),
 
-// QR si es pago por QR
+                    // QR si es pago por QR
                     if (_metodoPagoSeleccionado == MetodoPago.QR)
                       _buildQRPayment(),
 
-// Tarjeta
+                    // Tarjeta
                     if (_metodoPagoSeleccionado == MetodoPago.TARJETA)
                       _buildCardPayment(),
                   ],
@@ -325,8 +360,7 @@ class _CobroScreenState extends State<CobroScreen> {
             fontWeight: FontWeight.bold,
           ),
           decoration: InputDecoration(
-            prefixIcon: const Icon(
-                Icons.table_restaurant, color: AppColors.secondary),
+            prefixIcon: const Icon(Icons.table_restaurant, color: AppColors.secondary),
             hintText: 'Ej: 12',
             hintStyle: TextStyle(
               color: Colors.white.withOpacity(0.3),
@@ -343,8 +377,7 @@ class _CobroScreenState extends State<CobroScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                  color: AppColors.secondary, width: 2),
+              borderSide: const BorderSide(color: AppColors.secondary, width: 2),
             ),
           ),
         ),
@@ -467,8 +500,7 @@ class _CobroScreenState extends State<CobroScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                  color: AppColors.secondary, width: 2),
+              borderSide: const BorderSide(color: AppColors.secondary, width: 2),
             ),
           ),
         ),
@@ -526,8 +558,7 @@ class _CobroScreenState extends State<CobroScreen> {
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: _vuelto >= 0 ? AppColors.success : AppColors
-                            .error,
+                        color: _vuelto >= 0 ? AppColors.success : AppColors.error,
                       ),
                     ),
                   ],
