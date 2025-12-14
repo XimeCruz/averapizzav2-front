@@ -71,8 +71,18 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
   }
 
   double get _total {
-    return _items.fold(0.0, (sum, item) => sum + (item.precio * item.cantidad));
+    return _items.fold(0.0, (sum, item) {
+      // Si tiene peso, multiplicar por el peso; si no, multiplicar por 1
+      final peso = item.pesoKg ?? 1.0;
+      return sum + (item.precio * item.cantidad * peso);
+    });
   }
+
+  // En crear_pedido_screen.dart
+  // Reemplaza el método _agregarItem con esta versión modificada:
+
+  // En crear_pedido_screen.dart
+  // Reemplaza el método _agregarItem con esta versión modificada:
 
   void _agregarItem(ProductoDto producto, String categoria) async {
     // Si es pizza, abrir selector de sabores
@@ -90,31 +100,12 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
         return;
       }
 
-      // Buscar si ya existe una pizza con esta presentación en el carrito
-      // para editar sus sabores
+      // Solo preseleccionar sabores, NO buscar items existentes para editar
+      // Esto permite agregar múltiples pizzas al carrito
       List<ProductoDto>? saboresPreseleccionados;
-      ItemPedido? itemExistente;
 
-      // Buscar items con la misma presentación
-      final itemsConMismaPresentacion = _items.where(
-              (item) => item.presentacionId == producto.presentacionId &&
-              item.tipoProducto == 'PIZZA'
-      ).toList();
-
-      if (itemsConMismaPresentacion.isNotEmpty) {
-        // Si ya existe, usar el primero encontrado
-        itemExistente = itemsConMismaPresentacion.first;
-
-        // Reconstruir la lista de sabores preseleccionados
-        if (itemExistente.saboresIds != null && itemExistente.saboresIds!.isNotEmpty) {
-          saboresPreseleccionados = itemExistente.saboresIds!
-              .map((id) => sabores.firstWhere(
-                (s) => s.id == id,
-            orElse: () => sabores.first,
-          ))
-              .toList();
-        }
-      }
+      //  preseleccionar automáticamente el sabor clickeado
+      saboresPreseleccionados = [producto];
 
       // Mostrar diálogo de selección de sabores
       await showDialog(
@@ -123,20 +114,22 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
           saboresDisponibles: sabores,
           presentacion: _categoriaSeleccionada!,
           saboresPreseleccionados: saboresPreseleccionados,
-          onConfirmar: (saboresSeleccionados) {
+          onConfirmar: (saboresSeleccionados, {double peso = 0}) {
             // Agregar la pizza con los sabores seleccionados
             final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
 
             // Debug: Verificar que los IDs se están guardando
             print('=== DEBUG AGREGAR PIZZA ===');
-            print('Sabores seleccionados: ${saboresSeleccionados.map((s) => s.nombre).join(", ")}');
+            print(
+              'Sabores seleccionados: ${saboresSeleccionados.map((s) => s.nombre).join(", ")}',
+            );
             print('IDs de sabores: $saboresIds');
             print('Cantidad de sabores: ${saboresIds.length}');
 
             // Calcular el precio PROMEDIANDO los sabores seleccionados
             final precioTotal = saboresSeleccionados.fold<double>(
               0.0,
-                  (sum, sabor) => sum + sabor.precio,
+              (sum, sabor) => sum + sabor.precio,
             );
             final precioPromedio = precioTotal / saboresSeleccionados.length;
 
@@ -147,19 +140,22 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
 
             setState(() {
               // Crear identificador único con los sabores ordenados
-              final uniqueId = '${producto.presentacionId}_${saboresIds.join('_')}';
-
-              // Si es una edición, remover el item anterior
-              if (itemExistente != null) {
-                _items.removeWhere((item) => item.uniqueId == itemExistente!.uniqueId);
-              }
+              final uniqueId =
+                  '${producto.presentacionId}_${saboresIds.join('_')}';
 
               // Buscar si ya existe este mismo pedido (misma combinación de sabores)
-              final index = _items.indexWhere((item) => item.uniqueId == uniqueId);
+              final index = _items.indexWhere(
+                (item) => item.uniqueId == uniqueId,
+              );
 
               if (index >= 0) {
                 // Si ya existe con la misma combinación, incrementar cantidad
                 _items[index].cantidad++;
+
+                print('=== ITEM EXISTENTE - INCREMENTANDO ===');
+                print('Item: ${_items[index].nombre}');
+                print('Nueva cantidad: ${_items[index].cantidad}');
+                print('=====================================');
               } else {
                 // Agregar nuevo item
                 final nuevoItem = ItemPedido(
@@ -168,18 +164,21 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                   uniqueId: uniqueId,
                   nombre: nombrePizza,
                   precio: precioPromedio, // Precio promediado
-                  cantidad: itemExistente?.cantidad ?? 1, // Mantener la cantidad si estaba editando
+                  cantidad: 1,
                   categoria: categoria,
                   presentacion: producto.presentacion,
                   tipoProducto: producto.tipoProducto,
                   saborId: saboresSeleccionados.first.id,
                   saboresIds: saboresIds, // IMPORTANTE: Guardar todos los IDs
+                  pesoKg: peso > 0 ? peso : null,
                 );
 
                 // Debug: Verificar el item creado
-                print('Item creado:');
-                print('  - saboresIds: ${nuevoItem.saboresIds}');
-                print('  - presentacionId: ${nuevoItem.presentacionId}');
+                print('=== NUEVO ITEM AGREGADO ===');
+                print('Nombre: ${nuevoItem.nombre}');
+                print('saboresIds: ${nuevoItem.saboresIds}');
+                print('presentacionId: ${nuevoItem.presentacionId}');
+                print('pesoKg: ${nuevoItem.pesoKg}');
                 print('===========================');
 
                 _items.add(nuevoItem);
@@ -197,101 +196,117 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
         if (index >= 0) {
           _items[index].cantidad++;
         } else {
-          _items.add(ItemPedido(
-            id: producto.id,
-            presentacionId: producto.presentacionId,
-            uniqueId: uniqueId,
-            nombre: producto.nombre,
-            precio: producto.precio,
-            cantidad: 1,
-            categoria: categoria,
-            presentacion: producto.presentacion,
-            tipoProducto: producto.tipoProducto,
-            saborId: producto.id,
-          ));
+          _items.add(
+            ItemPedido(
+              id: producto.id,
+              presentacionId: producto.presentacionId,
+              uniqueId: uniqueId,
+              nombre: producto.nombre,
+              precio: producto.precio,
+              cantidad: 1,
+              categoria: categoria,
+              presentacion: producto.presentacion,
+              tipoProducto: producto.tipoProducto,
+              saborId: producto.id,
+            ),
+          );
         }
       });
     }
   }
 
   void _editarSaboresPizza(int index) async {
-    final item = _items[index];
+  final item = _items[index];
 
-    if (item.tipoProducto != 'PIZZA') return;
+  if (item.tipoProducto != 'PIZZA') return;
 
-    // Obtener la categoría de la pizza
-    String? categoria;
-    if (item.presentacion == 'PESO') categoria = 'PESO';
-    else if (item.presentacion == 'REDONDA') categoria = 'REDONDA';
-    else if (item.presentacion == 'BANDEJA') categoria = 'BANDEJA';
+  // Obtener la categoría de la pizza
+  String? categoria;
+  if (item.presentacion == 'PESO') categoria = 'PESO';
+  else if (item.presentacion == 'REDONDA') categoria = 'REDONDA';
+  else if (item.presentacion == 'BANDEJA') categoria = 'BANDEJA';
 
-    if (categoria == null) return;
+  if (categoria == null) return;
 
-    final sabores = _productos[categoria] ?? [];
-    if (sabores.isEmpty) return;
+  final sabores = _productos[categoria] ?? [];
+  if (sabores.isEmpty) return;
 
-    // Reconstruir los sabores preseleccionados
-    List<ProductoDto>? saboresPreseleccionados;
-    if (item.saboresIds != null && item.saboresIds!.isNotEmpty) {
-      saboresPreseleccionados = item.saboresIds!
-          .map((id) => sabores.firstWhere(
+  // Reconstruir los sabores preseleccionados
+  List<ProductoDto>? saboresPreseleccionados;
+  if (item.saboresIds != null && item.saboresIds!.isNotEmpty) {
+    saboresPreseleccionados = item.saboresIds!
+        .map(
+          (id) => sabores.firstWhere(
             (s) => s.id == id,
-        orElse: () => sabores.first,
-      ))
-          .toList();
-    }
-
-    // Mostrar diálogo
-    await showDialog(
-      context: context,
-      builder: (context) => SelectorSaboresDialog(
-        saboresDisponibles: sabores,
-        presentacion: categoria!,
-        saboresPreseleccionados: saboresPreseleccionados,
-        onConfirmar: (saboresSeleccionados) {
-          final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
-          final precioTotal = saboresSeleccionados.fold<double>(
-            0.0,
-                (sum, sabor) => sum + sabor.precio,
-          );
-          final precioPromedio = precioTotal / saboresSeleccionados.length;
-          String nombrePizza = saboresSeleccionados
-              .map((s) => s.nombre)
-              .join(' + ');
-
-          setState(() {
-            final uniqueId = '${item.presentacionId}_${saboresIds.join('_')}';
-
-            // Buscar si ya existe otra pizza con esta combinación
-            final existingIndex = _items.indexWhere(
-                    (i) => i.uniqueId == uniqueId && _items.indexOf(i) != index
-            );
-
-            if (existingIndex >= 0) {
-              // Si ya existe, sumar las cantidades y remover el item actual
-              _items[existingIndex].cantidad += item.cantidad;
-              _items.removeAt(index);
-            } else {
-              // Actualizar el item actual
-              _items[index] = ItemPedido(
-                id: saboresSeleccionados.first.id,
-                presentacionId: item.presentacionId,
-                uniqueId: uniqueId,
-                nombre: nombrePizza,
-                precio: precioPromedio,
-                cantidad: item.cantidad,
-                categoria: item.categoria,
-                presentacion: item.presentacion,
-                tipoProducto: item.tipoProducto,
-                saborId: saboresSeleccionados.first.id,
-                saboresIds: saboresIds,
-              );
-            }
-          });
-        },
-      ),
-    );
+            orElse: () => sabores.first,
+          ),
+        )
+        .toList();
   }
+
+  // ✨ NUEVO: Obtener el peso preseleccionado si existe
+  double? pesoPreseleccionado;
+  if (item.pesoKg != null && item.pesoKg! > 0) {
+    pesoPreseleccionado = item.pesoKg;
+    
+    print('=== EDICIÓN CON PESO ===');
+    print('Peso preseleccionado: $pesoPreseleccionado kg');
+    print('========================');
+  }
+
+  // Mostrar diálogo
+  await showDialog(
+    context: context,
+    builder: (context) => SelectorSaboresDialog(
+      saboresDisponibles: sabores,
+      presentacion: categoria!,
+      saboresPreseleccionados: saboresPreseleccionados,
+      pesoPreseleccionado: pesoPreseleccionado, // ✨ Pasar el peso
+      onConfirmar: (saboresSeleccionados, {double peso = 0}) {
+        final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
+        final precioTotal = saboresSeleccionados.fold<double>(
+          0.0,
+          (sum, sabor) => sum + sabor.precio,
+        );
+        final precioPromedio = precioTotal / saboresSeleccionados.length;
+        String nombrePizza = saboresSeleccionados
+            .map((s) => s.nombre)
+            .join(' + ');
+
+        setState(() {
+          final uniqueId = '${item.presentacionId}_${saboresIds.join('_')}';
+
+          // Buscar si ya existe otra pizza con esta combinación
+          final existingIndex = _items.indexWhere(
+            (i) => i.uniqueId == uniqueId && _items.indexOf(i) != index,
+          );
+
+          if (existingIndex >= 0) {
+            // Si ya existe, sumar las cantidades y remover el item actual
+            _items[existingIndex].cantidad += item.cantidad;
+            _items.removeAt(index);
+          } else {
+            // Actualizar el item actual
+            _items[index] = ItemPedido(
+              id: saboresSeleccionados.first.id,
+              presentacionId: item.presentacionId,
+              uniqueId: uniqueId,
+              nombre: nombrePizza,
+              precio: precioPromedio,
+              cantidad: item.cantidad,
+              categoria: item.categoria,
+              presentacion: item.presentacion,
+              tipoProducto: item.tipoProducto,
+              saborId: saboresSeleccionados.first.id,
+              saboresIds: saboresIds,
+              pesoKg: peso > 0 ? peso : null, // Actualizar el peso
+            );
+          }
+        });
+      },
+    ),
+  );
+}
 
   void _actualizarCantidad(int index, int delta) {
     setState(() {
@@ -303,27 +318,48 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
   }
 
   void _irACobro() {
-    if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Agrega al menos un producto al pedido'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CobroScreen(
-          items: _items,
-          notas: _notasController.text,
-        ),
+  if (_items.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Agrega al menos un producto al pedido'),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
       ),
     );
+    return;
   }
+
+  // Crear copia de items con precio real calculado
+  final itemsConPrecioReal = _items.map((item) {
+    // Si tiene peso, el precio real es precio * peso
+    final precioReal = item.precio * (item.pesoKg ?? 1.0);
+    
+    return ItemPedido(
+      id: item.id,
+      presentacionId: item.presentacionId,
+      uniqueId: item.uniqueId,
+      nombre: item.nombre,
+      precio: precioReal, // Precio real (ya con peso multiplicado)
+      cantidad: item.cantidad,
+      categoria: item.categoria,
+      presentacion: item.presentacion,
+      tipoProducto: item.tipoProducto,
+      saborId: item.saborId,
+      saboresIds: item.saboresIds,
+      pesoKg: item.pesoKg,
+    );
+  }).toList();
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => CobroScreen(
+        items: itemsConPrecioReal, // Items con precio real
+        notas: _notasController.text,
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -340,10 +376,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             children: [
               CircularProgressIndicator(color: AppColors.secondary),
               SizedBox(height: 16),
-              Text(
-                'Cargando menú...',
-                style: TextStyle(color: Colors.white70),
-              ),
+              Text('Cargando menú...', style: TextStyle(color: Colors.white70)),
             ],
           ),
         ),
@@ -439,14 +472,14 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
       ),
       floatingActionButton: !isDesktop && _items.isNotEmpty
           ? FloatingActionButton.extended(
-        onPressed: _irACobro,
-        backgroundColor: AppColors.secondary,
-        icon: const Icon(Icons.payment),
-        label: Text(
-          'Cobrar Bs. ${_total.toStringAsFixed(2)}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      )
+              onPressed: _irACobro,
+              backgroundColor: AppColors.secondary,
+              icon: const Icon(Icons.payment),
+              label: Text(
+                'Cobrar Bs. ${_total.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            )
           : null,
     );
   }
@@ -456,9 +489,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
       padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,51 +616,51 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
           const SizedBox(height: 12),
           productos.isEmpty
               ? Padding(
-            padding: const EdgeInsets.all(32),
-            child: Center(
-              child: Text(
-                'No hay productos disponibles en esta categoría',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                ),
-              ),
-            ),
-          )
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      'No hay productos disponibles en esta categoría',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    ),
+                  ),
+                )
               : GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 200,
-              childAspectRatio: 0.85,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: productos.length,
-            itemBuilder: (context, index) {
-              final producto = productos[index];
-              final uniqueId = '${producto.id}_${producto.presentacionId}';
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 200,
+                    childAspectRatio: 0.85,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: productos.length,
+                  itemBuilder: (context, index) {
+                    final producto = productos[index];
+                    final uniqueId =
+                        '${producto.id}_${producto.presentacionId}';
 
-              // Buscar cantidad en carrito SIN crear item vacío
-              int cantidadEnCarrito = 0;
-              try {
-                final itemEnCarrito = _items.firstWhere(
-                      (item) => item.uniqueId == uniqueId,
-                );
-                cantidadEnCarrito = itemEnCarrito.cantidad;
-              } catch (e) {
-                // No existe en el carrito
-                cantidadEnCarrito = 0;
-              }
+                    // Buscar cantidad en carrito SIN crear item vacío
+                    int cantidadEnCarrito = 0;
+                    try {
+                      final itemEnCarrito = _items.firstWhere(
+                        (item) => item.uniqueId == uniqueId,
+                      );
+                      cantidadEnCarrito = itemEnCarrito.cantidad;
+                    } catch (e) {
+                      // No existe en el carrito
+                      cantidadEnCarrito = 0;
+                    }
 
-              return _ProductCard(
-                nombre: producto.nombre,
-                precio: producto.precio,
-                presentacion: producto.presentacion,
-                cantidadEnCarrito: cantidadEnCarrito,
-                onTap: () => _agregarItem(producto, _categoriaSeleccionada!),
-              );
-            },
-          ),
+                    return _ProductCard(
+                      nombre: producto.nombre,
+                      precio: producto.precio,
+                      presentacion: producto.presentacion,
+                      cantidadEnCarrito: cantidadEnCarrito,
+                      onTap: () =>
+                          _agregarItem(producto, _categoriaSeleccionada!),
+                    );
+                  },
+                ),
           const SizedBox(height: 32),
           if (_bebidas.isNotEmpty) ...[
             Text(
@@ -659,7 +690,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                 int cantidadEnCarrito = 0;
                 try {
                   final itemEnCarrito = _items.firstWhere(
-                        (item) => item.uniqueId == uniqueId,
+                    (item) => item.uniqueId == uniqueId,
                   );
                   cantidadEnCarrito = itemEnCarrito.cantidad;
                 } catch (e) {
@@ -737,7 +768,10 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                       _items.clear();
                     });
                   },
-                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.error,
+                  ),
                   tooltip: 'Vaciar carrito',
                 ),
             ],
@@ -746,49 +780,48 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
         Expanded(
           child: _items.isEmpty
               ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 64,
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Carrito vacío',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.6),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 64,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Carrito vacío',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          )
+                )
               : ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: _items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final item = _items[index];
-              return _CartItem(
-                item: item,
-                onIncrease: () => _actualizarCantidad(index, 1),
-                onDecrease: () => _actualizarCantidad(index, -1),
-                onDelete: () => _actualizarCantidad(index, -item.cantidad),
-                onEdit: item.tipoProducto == 'PIZZA'
-                    ? () => _editarSaboresPizza(index)
-                    : null,
-              );
-            },
-          ),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final item = _items[index];
+                    return _CartItem(
+                      item: item,
+                      onIncrease: () => _actualizarCantidad(index, 1),
+                      onDecrease: () => _actualizarCantidad(index, -1),
+                      onDelete: () =>
+                          _actualizarCantidad(index, -item.cantidad),
+                      onEdit: item.tipoProducto == 'PIZZA'
+                          ? () => _editarSaboresPizza(index)
+                          : null,
+                    );
+                  },
+                ),
         ),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
-            ),
+            border: Border(top: BorderSide(color: Color(0xFF2A2A2A), width: 1)),
           ),
           child: TextField(
             controller: _notasController,
@@ -811,7 +844,10 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.secondary, width: 2),
+                borderSide: const BorderSide(
+                  color: AppColors.secondary,
+                  width: 2,
+                ),
               ),
             ),
           ),
@@ -1159,7 +1195,7 @@ class _CartItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${item.tipoProducto} - ${item.presentacion}',
+                      '${item.tipoProducto} - ${item.presentacion}${item.pesoKg != null ? ' ${item.pesoKg} kg' : ''}',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withOpacity(0.5),
@@ -1172,7 +1208,10 @@ class _CartItem extends StatelessWidget {
               if (onEdit != null)
                 IconButton(
                   onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined, color: AppColors.warning),
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    color: AppColors.warning,
+                  ),
                   iconSize: 20,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -1224,7 +1263,7 @@ class _CartItem extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                'Bs. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
+                'Bs. ${(item.precio * item.cantidad * (item.pesoKg ?? 1.0)).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

@@ -1,21 +1,27 @@
-// lib/presentation/widgets/selector_sabores_dialog.dart
+// lib/presentation/widgets/cajero/selector_sabores_dialog.dart
+// MODIFICADO para soportar peso preseleccionado
 
 import 'package:flutter/material.dart';
-
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/producto_model.dart';
+import 'package:flutter/services.dart';
 
 class SelectorSaboresDialog extends StatefulWidget {
   final List<ProductoDto> saboresDisponibles;
   final String presentacion;
   final List<ProductoDto>? saboresPreseleccionados;
-  final Function(List<ProductoDto>) onConfirmar;
+  final double? pesoPreseleccionado;
+  final void Function(
+    List<ProductoDto>, {
+    double peso,
+  }) onConfirmar;
 
   const SelectorSaboresDialog({
     super.key,
     required this.saboresDisponibles,
     required this.presentacion,
     this.saboresPreseleccionados,
+    this.pesoPreseleccionado,
     required this.onConfirmar,
   });
 
@@ -25,6 +31,8 @@ class SelectorSaboresDialog extends StatefulWidget {
 
 class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
   late final List<ProductoDto> _saboresSeleccionados;
+  final TextEditingController _pesoController = TextEditingController();
+  double _pesoKg = 0.0;
 
   @override
   void initState() {
@@ -33,6 +41,21 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
     _saboresSeleccionados = widget.saboresPreseleccionados != null
         ? List<ProductoDto>.from(widget.saboresPreseleccionados!)
         : [];
+
+    if (widget.pesoPreseleccionado != null && widget.pesoPreseleccionado! > 0) {
+      _pesoKg = widget.pesoPreseleccionado!;
+      _pesoController.text = _pesoKg.toStringAsFixed(2);
+      
+      print('=== PESO INICIALIZADO ===');
+      print('Peso: $_pesoKg kg');
+      print('=========================');
+    }
+  }
+
+  @override
+  void dispose() {
+    _pesoController.dispose();
+    super.dispose();
   }
 
   int get _maxSabores {
@@ -91,7 +114,7 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
 
     final total = _saboresSeleccionados.fold<double>(
       0.0,
-          (sum, sabor) => sum + sabor.precio,
+      (sum, sabor) => sum + sabor.precio,
     );
     final promedio = total / _saboresSeleccionados.length;
 
@@ -103,13 +126,23 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
     return '($precios) ÷ ${_saboresSeleccionados.length} = Bs. ${promedio.toStringAsFixed(2)}';
   }
 
+  String _calcularPrecioTotal() {
+    if (_saboresSeleccionados.isEmpty || _pesoKg <= 0) return '';
+
+    final precioPromedio = _saboresSeleccionados.fold<double>(
+          0.0,
+          (sum, sabor) => sum + sabor.precio,
+        ) /
+        _saboresSeleccionados.length;
+
+    return '${_pesoKg.toStringAsFixed(2)} kg × Bs. ${precioPromedio.toStringAsFixed(2)}/kg = Bs. ${(precioPromedio * _pesoKg).toStringAsFixed(2)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
         padding: const EdgeInsets.all(24),
@@ -213,8 +246,9 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
                 itemBuilder: (context, index) {
                   final sabor = widget.saboresDisponibles[index];
                   final isSelected = _estaSeleccionado(sabor);
-                  final selectionIndex = _saboresSeleccionados
-                      .indexWhere((s) => s.id == sabor.id);
+                  final selectionIndex = _saboresSeleccionados.indexWhere(
+                    (s) => s.id == sabor.id,
+                  );
 
                   return _SaborCard(
                     sabor: sabor,
@@ -237,7 +271,69 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
                   color: Colors.white.withOpacity(0.9),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+
+              if (widget.presentacion == 'PESO') ...[
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 150,
+                      child: TextField(
+                        controller: _pesoController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,2}'),
+                          ),
+                        ],
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          hintText: 'Peso (kg)',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.monitor_weight,
+                            color: Colors.white.withOpacity(0.5),
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFF2A2A2A),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.secondary,
+                              width: 2,
+                            ),
+                          ),
+                          isDense: true,
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _pesoKg = double.tryParse(value) ?? 0.0;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -298,9 +394,7 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
                 decoration: BoxDecoration(
                   color: AppColors.success.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.success.withOpacity(0.3),
-                  ),
+                  border: Border.all(color: AppColors.success.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
@@ -323,7 +417,9 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _calcularPrecioPromedio(),
+                            widget.presentacion == 'PESO'
+                                ? _calcularPrecioTotal()
+                                : _calcularPrecioPromedio(),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -369,18 +465,10 @@ class _SelectorSaboresDialogState extends State<SelectorSaboresDialog> {
                     onPressed: _saboresSeleccionados.isEmpty
                         ? null
                         : () {
-                      // Debug: Verificar qué se está retornando
-                      print('\n=== DEBUG SELECTOR SABORES ===');
-                      print('Sabores seleccionados (${_saboresSeleccionados.length}):');
-                      for (var sabor in _saboresSeleccionados) {
-                        print('  - ${sabor.nombre} (ID: ${sabor.id})');
-                      }
-                      print('IDs: ${_saboresSeleccionados.map((s) => s.id).toList()}');
-                      print('================================\n');
-
-                      widget.onConfirmar(_saboresSeleccionados);
-                      Navigator.pop(context);
-                    },
+                            widget.onConfirmar(_saboresSeleccionados,
+                                peso: _pesoKg);
+                            Navigator.pop(context);
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.secondary,
                       disabledBackgroundColor: Colors.grey.shade800,
@@ -454,16 +542,15 @@ class _SaborCard extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: (isSelected
-                            ? AppColors.secondary
-                            : AppColors.secondary.withOpacity(0.2))
+                                ? AppColors.secondary
+                                : AppColors.secondary.withOpacity(0.2))
                             .withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.local_pizza,
-                        color: isSelected
-                            ? AppColors.secondary
-                            : Colors.white70,
+                        color:
+                            isSelected ? AppColors.secondary : Colors.white70,
                         size: 32,
                       ),
                     ),
@@ -473,7 +560,7 @@ class _SaborCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.w600,
+                            isSelected ? FontWeight.bold : FontWeight.w600,
                         color: isSelected ? Colors.white : Colors.white70,
                       ),
                       textAlign: TextAlign.center,

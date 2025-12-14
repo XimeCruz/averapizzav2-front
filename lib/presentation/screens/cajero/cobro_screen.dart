@@ -1000,7 +1000,7 @@ class _CobroScreenState extends State<CobroScreen> {
                             ),
                           ),
                           Text(
-                            '${item.tipoProducto} - ${item.presentacion}',
+                            '${item.tipoProducto} - ${item.presentacion} ${item.pesoKg != null ? ' - ${item.pesoKg} kg' : ''}',
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.white.withOpacity(0.5),
