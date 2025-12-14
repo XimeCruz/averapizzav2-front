@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/pedido_model.dart';
 import '../../layouts/cajero_layout.dart';
 import '../../providers/pedido_provider.dart';
 
@@ -20,22 +22,37 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   Future<void> _loadData() async {
-    await context.read<PedidoProvider>().loadPedidosPendientes();
+    try {
+      print('🔄 Cargando pedidos PENDIENTES...');
+      await context.read<PedidoProvider>().loadPedidosByEstado(EstadoPedido.PENDIENTE);
+      print('✅ Pedidos cargados');
+    } catch (e) {
+      print('❌ Error cargando pedidos: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar pedidos: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
-  void _verDetalles(dynamic pedido) {
+  void _verDetalles(Pedido pedido) {
     showDialog(
       context: context,
       builder: (context) => _PedidoDetalleDialog(pedido: pedido),
     );
   }
 
-  void _enviarACocina(dynamic pedido) async {
-    // Confirmar acción
+  void _enviarACocina(Pedido pedido) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => _ConfirmDialog(
@@ -49,23 +66,30 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    // Aquí iría la lógica para cambiar el estado
-    // await context.read<PedidoProvider>().cambiarEstado(pedido.id, EstadoPedido.EN_PREPARACION);
+    final success = await context.read<PedidoProvider>().tomarPedido(pedido.id!);
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Pedido #${pedido.id} enviado a cocina'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    _loadData();
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Pedido #${pedido.id} enviado a cocina'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Error al enviar el pedido a cocina'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
-  void _cancelarPedido(dynamic pedido) async {
+  void _cancelarPedido(Pedido pedido) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => _ConfirmDialog(
@@ -79,20 +103,27 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    // Aquí iría la lógica para cancelar
-    // await context.read<PedidoProvider>().cancelarPedido(pedido.id);
+    final success = await context.read<PedidoProvider>().cancelarPedido(pedido.id!);
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Pedido #${pedido.id} cancelado'),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    _loadData();
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Pedido #${pedido.id} cancelado'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Error al cancelar el pedido'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -116,17 +147,34 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
           Expanded(
             child: Consumer<PedidoProvider>(
               builder: (context, provider, _) {
+                print('=== DEBUG PEDIDOS PENDIENTES ===');
+                print('Total pedidos pendientes: ${provider.pedidosPendientes.length}');
+
                 if (provider.status == PedidoStatus.loading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.warning),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(color: AppColors.warning),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Cargando pedidos...',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
-                final pedidos = provider.pedidos
-                    .where((p) => p.estado == EstadoPedido.PENDIENTE)
+                // Usar pedidosPendientes del provider
+                final pedidos = provider.pedidosPendientes
                     .where((p) => _searchQuery.isEmpty ||
-                    p.id.toString().contains(_searchQuery))
+                    (p.id?.toString().contains(_searchQuery) ?? false))
                     .toList();
+
+                print('Pedidos después de búsqueda: ${pedidos.length}');
 
                 if (pedidos.isEmpty) {
                   return _buildEmptyState();
@@ -153,6 +201,7 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
                             icon: Icons.restaurant,
                             label: 'Enviar a Cocina',
                             color: AppColors.info,
+                            isPrimary: true,
                             onTap: () => _enviarACocina(pedido),
                           ),
                           _PedidoAction(
@@ -253,7 +302,7 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
 }
 
 class _PedidoCard extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
   final Color statusColor;
   final IconData statusIcon;
   final String statusText;
@@ -272,6 +321,10 @@ class _PedidoCard extends StatelessWidget {
     required this.onVerDetalles,
     required this.actions,
   });
+
+  String _formatearFecha(DateTime fechaHora) {
+    return DateFormat('HH:mm').format(fechaHora);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -364,13 +417,31 @@ class _PedidoCard extends StatelessWidget {
                         Row(
                           children: [
                             Icon(
+                              pedido.tipoServicio == TipoServicio.DELIVERY
+                                  ? Icons.delivery_dining
+                                  : pedido.tipoServicio == TipoServicio.LLEVAR
+                                  ? Icons.shopping_bag
+                                  : Icons.table_restaurant,
+                              size: 16,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              pedido.getTipoServicioTexto(),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Icon(
                               Icons.shopping_bag_outlined,
                               size: 16,
                               color: Colors.white.withOpacity(0.5),
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              '${pedido.items?.length ?? 0} items',
+                              '${pedido.detalles.length} items',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white.withOpacity(0.6),
@@ -384,7 +455,7 @@ class _PedidoCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              showTimer ? '15 min' : TimeOfDay.now().format(context),
+                              _formatearFecha(pedido.fechaHora),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white.withOpacity(0.6),
@@ -401,7 +472,7 @@ class _PedidoCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                        'Bs. ${pedido.total.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -421,9 +492,9 @@ class _PedidoCard extends StatelessWidget {
           ),
 
           // Separador
-          Divider(
+          const Divider(
             height: 1,
-            color: const Color(0xFF2A2A2A),
+            color: Color(0xFF2A2A2A),
           ),
 
           // Botones de acción
@@ -493,7 +564,6 @@ class _PedidoAction {
   });
 }
 
-// Dialog de confirmación
 class _ConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -587,11 +657,14 @@ class _ConfirmDialog extends StatelessWidget {
   }
 }
 
-// Dialog de detalles del pedido
 class _PedidoDetalleDialog extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
 
   const _PedidoDetalleDialog({required this.pedido});
+
+  String _formatearFecha(DateTime fechaHora) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(fechaHora);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -615,13 +688,26 @@ class _PedidoDetalleDialog extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Pedido #${pedido.id}',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pedido #${pedido.id}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatearFecha(pedido.fechaHora),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   IconButton(
@@ -639,17 +725,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Items
-                    Text(
-                      'Items del Pedido',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Aquí irían los items del pedido
+                    // Información del pedido
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -657,14 +733,151 @@ class _PedidoDetalleDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF2A2A2A)),
                       ),
-                      child: Text(
-                        'Pizza Muzzarella x2\nCoca Cola 500ml x1',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Tipo de Servicio',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.6),
+                                ),
+                              ),
+                              Text(
+                                pedido.getTipoServicioTexto(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Atendido por',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.6),
+                                ),
+                              ),
+                              Text(
+                                pedido.usuarioNombre ?? 'Sin usuario',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // Items
+                    Text(
+                      'Items del Pedido (${pedido.detalles.length})',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    ...pedido.detalles.map((detalle) {
+                      final sabores = [
+                        detalle.sabor1Nombre,
+                        detalle.sabor2Nombre,
+                        detalle.sabor3Nombre
+                      ].where((s) => s != null && s.isNotEmpty).join(', ');
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0A0A0A),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${detalle.cantidad}x',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    detalle.productoNombre ?? 'Pizza',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (detalle.presentacionNombre != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      detalle.presentacionNombre!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white.withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ],
+                                  if (sabores.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      sabores,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Text(
+                              'Bs. ${detalle.subtotal.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
 
                     const SizedBox(height: 24),
 
@@ -695,7 +908,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                            'Bs. ${pedido.total.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,

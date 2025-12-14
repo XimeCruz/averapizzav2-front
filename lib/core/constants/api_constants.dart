@@ -84,8 +84,8 @@ class ApiConstants {
       '$apiVersion/cajero/pedidos/$id/cancelar';
 
   // ========== PEDIDOS - COCINA ENDPOINTS ==========
-  static const String pedidosPendientes = '$apiVersion/cocina/pedidos/pendientes';
-  static const String pedidosEnPreparacion = '$apiVersion/cocina/pedidos/en-preparacion';
+  static const String pedidosPendientes = '$apiVersion/cajero/pedidos/estado/PENDIENTE';
+  static const String pedidosEnPreparacion = '$apiVersion/cajero/pedidos/estado/EN_PREPARACION';
   static String tomarPedido(int id) => '$apiVersion/cocina/pedidos/$id/tomar';
   static String marcarListo(int id) => '$apiVersion/cocina/pedidos/$id/marcar-listo';
 

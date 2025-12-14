@@ -204,14 +204,14 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PedidosListScreen(
-                                estado: EstadoPedido.PENDIENTE,
-                              ),
-                            ),
-                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (_) => const PedidosListScreen(
+                          //       estado: EstadoPedido.PENDIENTE,
+                          //     ),
+                          //   ),
+                          // );
                         },
                       ),
                     ),
@@ -231,14 +231,14 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PedidosListScreen(
-                                estado: EstadoPedido.EN_PREPARACION,
-                              ),
-                            ),
-                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (_) => const PedidosListScreen(
+                          //       estado: EstadoPedido.EN_PREPARACION,
+                          //     ),
+                          //   ),
+                          // );
                         },
                       ),
                     ),
@@ -258,14 +258,14 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PedidosListScreen(
-                                estado: EstadoPedido.LISTO,
-                              ),
-                            ),
-                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (_) => const PedidosListScreen(
+                          //       estado: EstadoPedido.LISTO,
+                          //     ),
+                          //   ),
+                          // );
                         },
                       ),
                     ),
@@ -285,12 +285,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PedidosListScreen(),
-                            ),
-                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (_) => const PedidosListScreen(),
+                          //   ),
+                          // );
                         },
                       ),
                     ),
