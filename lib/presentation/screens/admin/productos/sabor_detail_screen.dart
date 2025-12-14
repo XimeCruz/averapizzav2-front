@@ -87,7 +87,7 @@ class _SaborDetailScreenState extends State<SaborDetailScreen> with SingleTicker
           unselectedLabelColor: Colors.white54,
           tabs: const [
             Tab(text: 'Precios', icon: Icon(Icons.attach_money)),
-            Tab(text: 'Receta', icon: Icon(Icons.menu_book)),
+            // Tab(text: 'Receta', icon: Icon(Icons.menu_book)),
           ],
         ),
       ),
