@@ -255,3 +255,75 @@ class CreatePrecioRequest {
     'precio': precio,
   };
 }
+
+
+class MenuResponse {
+  final Map<String, List<ProductoDto>> pizzas;
+  final List<ProductoDto> bebidas;
+
+  MenuResponse({
+    required this.pizzas,
+    required this.bebidas,
+  });
+
+  factory MenuResponse.fromJson(Map<String, dynamic> json) {
+    Map<String, List<ProductoDto>> pizzasMap = {};
+
+    if (json['pizzas'] != null) {
+      (json['pizzas'] as Map<String, dynamic>).forEach((key, value) {
+        pizzasMap[key] = (value as List)
+            .map((item) => ProductoDto.fromJson(item))
+            .toList();
+      });
+    }
+
+    return MenuResponse(
+      pizzas: pizzasMap,
+      bebidas: json['bebidas'] != null
+          ? (json['bebidas'] as List)
+          .map((item) => ProductoDto.fromJson(item))
+          .toList()
+          : [],
+    );
+  }
+}
+
+class ProductoDto {
+  final int id;
+  final String nombre;
+  final double precio;
+  final String presentacion;
+  final int presentacionId;
+  final String tipoProducto;
+
+  ProductoDto({
+    required this.id,
+    required this.nombre,
+    required this.precio,
+    required this.presentacion,
+    required this.presentacionId,
+    required this.tipoProducto,
+  });
+
+  factory ProductoDto.fromJson(Map<String, dynamic> json) {
+    return ProductoDto(
+      id: json['id'],
+      nombre: json['nombre'],
+      precio: (json['precio'] as num).toDouble(),
+      presentacion: json['presentacion'],
+      presentacionId: json['presentacionId'],
+      tipoProducto: json['tipoProducto'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'precio': precio,
+      'presentacion': presentacion,
+      'presentacionId': presentacionId,
+      'tipoProducto': tipoProducto,
+    };
+  }
+}

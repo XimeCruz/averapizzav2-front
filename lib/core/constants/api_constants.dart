@@ -16,6 +16,7 @@ class ApiConstants {
 
   //ENDPOINTS SIN SEGURIDAD
   static const String productosPublicos = '$apiVersion/auth/completo';
+  static const String menu = '$apiVersion/cliente/productos/menu';
 
 
   // ========== USUARIOS ENDPOINTS ==========

@@ -7,6 +7,17 @@ import '../models/producto_model.dart';
 class ProductoRepository {
   final ApiClient _apiClient = ApiClient();
 
+  Future<MenuResponse> obtenerMenu() async {
+    try {
+      final response = await _apiClient.get(ApiConstants.menu);
+      return MenuResponse.fromJson(response.data);
+
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+
   // Obtiene todos los productos disponibles públicamente (sin autenticación)
   Future<List<Map<String, dynamic>>> getProductosPublicos() async {
     try {
