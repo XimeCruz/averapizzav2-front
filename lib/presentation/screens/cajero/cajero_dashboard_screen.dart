@@ -1,15 +1,18 @@
 // lib/presentation/screens/cajero/cajero_dashboard_screen.dart
 
-import 'package:avp_frontend/presentation/screens/cajero/historial_pedidos_screen.dart';
-import 'package:avp_frontend/presentation/screens/cajero/pedidos_listos_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/pedido_model.dart';
 import '../../layouts/cajero_layout.dart';
 import '../../providers/pedido_provider.dart';
 import 'crear_pedido_screen.dart';
-import '../admin/pedidos/pedidos_list_screen.dart';
+import 'historial_pedidos_screen.dart';
+import 'pedidos_en_cocina_screen.dart';
+import 'pedidos_listos_screen.dart';
+import 'pedidos_pendientes_screen.dart';
 
 class CajeroDashboardScreen extends StatefulWidget {
   const CajeroDashboardScreen({super.key});
@@ -22,17 +25,26 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   Future<void> _loadData() async {
-    final pedidoProvider = context.read<PedidoProvider>();
+    try {
+      print('🔄 Cargando dashboard del cajero...');
+      final pedidoProvider = context.read<PedidoProvider>();
 
-    await Future.wait([
-      pedidoProvider.loadPedidosPendientes(),
-      pedidoProvider.loadPedidosEnPreparacion(),
-      pedidoProvider.loadPedidosByEstado(EstadoPedido.LISTO),
-    ]);
+      await Future.wait([
+        pedidoProvider.loadPedidosByEstado(EstadoPedido.PENDIENTE),
+        pedidoProvider.loadPedidosByEstado(EstadoPedido.EN_PREPARACION),
+        pedidoProvider.loadPedidosByEstado(EstadoPedido.LISTO),
+      ]);
+
+      print('✅ Dashboard cargado');
+    } catch (e) {
+      print('❌ Error cargando dashboard: $e');
+    }
   }
 
   @override
@@ -60,19 +72,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header con hora
               _buildHeader(),
               const SizedBox(height: 24),
-
-              // Estadísticas de pedidos
               _buildStatsSection(),
               const SizedBox(height: 24),
-
-              // Botón grande para nuevo pedido
               _buildNewOrderButton(),
               const SizedBox(height: 24),
-
-              // Pedidos en proceso
               _buildOrdersInProgress(),
             ],
           ),
@@ -82,6 +87,9 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
   }
 
   Widget _buildHeader() {
+    final now = DateTime.now();
+    final timeFormat = DateFormat('HH:mm');
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -155,7 +163,7 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  TimeOfDay.now().format(context),
+                  timeFormat.format(now),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.secondary,
@@ -209,7 +217,7 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const HistorialPedidosScreen(),
+                              builder: (_) => const PedidosPendientesScreen(),
                             ),
                           );
                         },
@@ -231,14 +239,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => const PedidosListScreen(
-                          //       estado: EstadoPedido.EN_PREPARACION,
-                          //     ),
-                          //   ),
-                          // );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PedidosEnCocinaScreen(),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -270,9 +276,9 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: _StatCard(
-                        title: 'Total',
+                        title: 'Historial',
                         value: '${provider.pedidos.length}',
-                        icon: Icons.receipt_long,
+                        icon: Icons.history,
                         color: AppColors.secondary,
                         gradient: LinearGradient(
                           colors: [
@@ -283,12 +289,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => const PedidosListScreen(),
-                          //   ),
-                          // );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HistorialPedidosScreen(),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -311,14 +317,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                               ],
                             ),
                             onTap: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (_) => const PedidosListScreen(
-                              //       estado: EstadoPedido.PENDIENTE,
-                              //     ),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PedidosPendientesScreen(),
+                                ),
+                              );
                             },
                           ),
                         ),
@@ -336,14 +340,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                               ],
                             ),
                             onTap: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (_) => const PedidosListScreen(
-                              //       estado: EstadoPedido.EN_PREPARACION,
-                              //     ),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PedidosEnCocinaScreen(),
+                                ),
+                              );
                             },
                           ),
                         ),
@@ -365,23 +367,21 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                               ],
                             ),
                             onTap: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (_) => const PedidosListScreen(
-                              //       estado: EstadoPedido.LISTO,
-                              //     ),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PedidosListosScreen(),
+                                ),
+                              );
                             },
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _StatCard(
-                            title: 'Total',
+                            title: 'Historial',
                             value: '${provider.pedidos.length}',
-                            icon: Icons.receipt_long,
+                            icon: Icons.history,
                             color: AppColors.secondary,
                             gradient: LinearGradient(
                               colors: [
@@ -390,12 +390,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                               ],
                             ),
                             onTap: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (_) => const PedidosListScreen(),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const HistorialPedidosScreen(),
+                                ),
+                              );
                             },
                           ),
                         ),
@@ -449,7 +449,6 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // Decoración de fondo
               Positioned(
                 right: -20,
                 top: -20,
@@ -474,7 +473,6 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                   ),
                 ),
               ),
-              // Contenido
               Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -527,12 +525,15 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
   Widget _buildOrdersInProgress() {
     return Consumer<PedidoProvider>(
       builder: (context, provider, _) {
-        final pedidosActivos = provider.pedidos
-            .where((p) =>
-        p.estado == EstadoPedido.PENDIENTE ||
-            p.estado == EstadoPedido.EN_PREPARACION ||
-            p.estado == EstadoPedido.LISTO)
-            .toList();
+        // Combinar todas las listas de pedidos activos
+        final pedidosActivos = <Pedido>[
+          ...provider.pedidosPendientes,
+          ...provider.pedidosEnPreparacion,
+          ...provider.pedidosListos,
+        ];
+
+        // Ordenar por fecha más reciente
+        pedidosActivos.sort((a, b) => b.fechaHora.compareTo(a.fechaHora));
 
         if (pedidosActivos.isEmpty) {
           return Container(
@@ -710,9 +711,13 @@ class _StatCard extends StatelessWidget {
 }
 
 class _OrderCard extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
 
   const _OrderCard({required this.pedido});
+
+  String _formatearHora(DateTime fechaHora) {
+    return DateFormat('HH:mm').format(fechaHora);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -766,7 +771,6 @@ class _OrderCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Indicador de estado
                 Container(
                   width: 4,
                   height: 60,
@@ -776,8 +780,6 @@ class _OrderCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-
-                // Información del pedido
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -822,7 +824,7 @@ class _OrderCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${pedido.items?.length ?? 0} items',
+                        '${pedido.detalles.length} items',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.white.withOpacity(0.6),
@@ -831,13 +833,11 @@ class _OrderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Total
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                      'Bs. ${pedido.total.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -846,7 +846,7 @@ class _OrderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      TimeOfDay.now().format(context),
+                      _formatearHora(pedido.fechaHora),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white.withOpacity(0.5),
