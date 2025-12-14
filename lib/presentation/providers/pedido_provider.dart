@@ -174,6 +174,7 @@ class PedidoProvider extends ChangeNotifier {
           fechaHora: pedido.fechaHora,
           total: pedido.total,
           detalles: pedido.detalles,
+          metodoPago: pedido.metodoPago,
         );
       }
 
@@ -209,6 +210,7 @@ class PedidoProvider extends ChangeNotifier {
           fechaHora: pedido.fechaHora,
           total: pedido.total,
           detalles: pedido.detalles,
+          metodoPago: pedido.metodoPago,
         );
       }
 

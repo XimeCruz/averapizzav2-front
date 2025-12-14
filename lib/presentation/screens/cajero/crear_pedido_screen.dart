@@ -2,7 +2,11 @@
 
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/item_pedido.dart';
+import '../../../data/repositories/producto_repository.dart';
+import '../../../data/models/producto_model.dart';
 import '../../layouts/cajero_layout.dart';
+import '../../widgets/cajero/selector_sabores_dialog.dart';
 import 'cobro_screen.dart';
 
 class CrearPedidoScreen extends StatefulWidget {
@@ -13,62 +17,280 @@ class CrearPedidoScreen extends StatefulWidget {
 }
 
 class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
+  final ProductoRepository _productoRepository = ProductoRepository();
+
   String? _categoriaSeleccionada;
   final List<ItemPedido> _items = [];
   final TextEditingController _notasController = TextEditingController();
 
-  // Simulación de datos - En producción vendrían del backend
-  final Map<String, List<Map<String, dynamic>>> _productos = {
-    'PESO': [
-      {'id': 1, 'nombre': 'Muzzarella', 'precio': 12.50},
-      {'id': 2, 'nombre': 'Napolitana', 'precio': 14.00},
-      {'id': 3, 'nombre': 'Jamón y Morrones', 'precio': 15.50},
-      {'id': 4, 'nombre': 'Fugazzeta', 'precio': 13.50},
-      {'id': 5, 'nombre': 'Calabresa', 'precio': 14.50},
-    ],
-    'REDONDA': [
-      {'id': 6, 'nombre': 'Muzzarella', 'precio': 18.00},
-      {'id': 7, 'nombre': 'Napolitana', 'precio': 20.00},
-      {'id': 8, 'nombre': 'Especial', 'precio': 22.00},
-      {'id': 9, 'nombre': 'Calabresa', 'precio': 19.00},
-      {'id': 10, 'nombre': 'Jamón y Morrones', 'precio': 21.00},
-    ],
-    'BANDEJA': [
-      {'id': 11, 'nombre': 'Muzzarella Grande', 'precio': 35.00},
-      {'id': 12, 'nombre': 'Napolitana Grande', 'precio': 38.00},
-      {'id': 13, 'nombre': 'Especial Familiar', 'precio': 42.00},
-      {'id': 14, 'nombre': 'Mixta Familiar', 'precio': 45.00},
-    ],
-  };
+  // Datos del menú desde el backend
+  Map<String, List<ProductoDto>> _productos = {};
+  List<ProductoDto> _bebidas = [];
+  bool _isLoading = true;
+  String? _error;
 
-  final List<Map<String, dynamic>> _bebidas = [
-    {'id': 101, 'nombre': 'Coca-Cola 500ml', 'precio': 3.50},
-    {'id': 102, 'nombre': 'Coca-Cola 1.5L', 'precio': 5.00},
-    {'id': 103, 'nombre': 'Sprite 500ml', 'precio': 3.50},
-    {'id': 104, 'nombre': 'Agua Mineral', 'precio': 2.50},
-    {'id': 105, 'nombre': 'Fanta 500ml', 'precio': 3.50},
-    {'id': 106, 'nombre': 'Cerveza Quilmes', 'precio': 4.00},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _cargarMenu();
+  }
+
+  Future<void> _cargarMenu() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final menu = await _productoRepository.obtenerMenu();
+      setState(() {
+        _productos = menu.pizzas;
+        _bebidas = menu.bebidas;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar el menú: $e'),
+            backgroundColor: AppColors.error,
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: _cargarMenu,
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   double get _total {
     return _items.fold(0.0, (sum, item) => sum + (item.precio * item.cantidad));
   }
 
-  void _agregarItem(Map<String, dynamic> producto, String categoria) {
-    setState(() {
-      final index = _items.indexWhere((item) => item.id == producto['id']);
-      if (index >= 0) {
-        _items[index].cantidad++;
-      } else {
-        _items.add(ItemPedido(
-          id: producto['id'],
-          nombre: producto['nombre'],
-          precio: producto['precio'],
-          cantidad: 1,
-          categoria: categoria,
-        ));
+  void _agregarItem(ProductoDto producto, String categoria) async {
+    // Si es pizza, abrir selector de sabores
+    if (producto.tipoProducto == 'PIZZA') {
+      // Obtener todos los sabores de la categoría seleccionada
+      final sabores = _productos[_categoriaSeleccionada] ?? [];
+
+      if (sabores.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay sabores disponibles'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
       }
-    });
+
+      // Buscar si ya existe una pizza con esta presentación en el carrito
+      // para editar sus sabores
+      List<ProductoDto>? saboresPreseleccionados;
+      ItemPedido? itemExistente;
+
+      // Buscar items con la misma presentación
+      final itemsConMismaPresentacion = _items.where(
+              (item) => item.presentacionId == producto.presentacionId &&
+              item.tipoProducto == 'PIZZA'
+      ).toList();
+
+      if (itemsConMismaPresentacion.isNotEmpty) {
+        // Si ya existe, usar el primero encontrado
+        itemExistente = itemsConMismaPresentacion.first;
+
+        // Reconstruir la lista de sabores preseleccionados
+        if (itemExistente.saboresIds != null && itemExistente.saboresIds!.isNotEmpty) {
+          saboresPreseleccionados = itemExistente.saboresIds!
+              .map((id) => sabores.firstWhere(
+                (s) => s.id == id,
+            orElse: () => sabores.first,
+          ))
+              .toList();
+        }
+      }
+
+      // Mostrar diálogo de selección de sabores
+      await showDialog(
+        context: context,
+        builder: (context) => SelectorSaboresDialog(
+          saboresDisponibles: sabores,
+          presentacion: _categoriaSeleccionada!,
+          saboresPreseleccionados: saboresPreseleccionados,
+          onConfirmar: (saboresSeleccionados) {
+            // Agregar la pizza con los sabores seleccionados
+            final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
+
+            // Debug: Verificar que los IDs se están guardando
+            print('=== DEBUG AGREGAR PIZZA ===');
+            print('Sabores seleccionados: ${saboresSeleccionados.map((s) => s.nombre).join(", ")}');
+            print('IDs de sabores: $saboresIds');
+            print('Cantidad de sabores: ${saboresIds.length}');
+
+            // Calcular el precio PROMEDIANDO los sabores seleccionados
+            final precioTotal = saboresSeleccionados.fold<double>(
+              0.0,
+                  (sum, sabor) => sum + sabor.precio,
+            );
+            final precioPromedio = precioTotal / saboresSeleccionados.length;
+
+            // Crear nombre descriptivo con todos los sabores
+            String nombrePizza = saboresSeleccionados
+                .map((s) => s.nombre)
+                .join(' + ');
+
+            setState(() {
+              // Crear identificador único con los sabores ordenados
+              final uniqueId = '${producto.presentacionId}_${saboresIds.join('_')}';
+
+              // Si es una edición, remover el item anterior
+              if (itemExistente != null) {
+                _items.removeWhere((item) => item.uniqueId == itemExistente!.uniqueId);
+              }
+
+              // Buscar si ya existe este mismo pedido (misma combinación de sabores)
+              final index = _items.indexWhere((item) => item.uniqueId == uniqueId);
+
+              if (index >= 0) {
+                // Si ya existe con la misma combinación, incrementar cantidad
+                _items[index].cantidad++;
+              } else {
+                // Agregar nuevo item
+                final nuevoItem = ItemPedido(
+                  id: saboresSeleccionados.first.id,
+                  presentacionId: producto.presentacionId,
+                  uniqueId: uniqueId,
+                  nombre: nombrePizza,
+                  precio: precioPromedio, // Precio promediado
+                  cantidad: itemExistente?.cantidad ?? 1, // Mantener la cantidad si estaba editando
+                  categoria: categoria,
+                  presentacion: producto.presentacion,
+                  tipoProducto: producto.tipoProducto,
+                  saborId: saboresSeleccionados.first.id,
+                  saboresIds: saboresIds, // IMPORTANTE: Guardar todos los IDs
+                );
+
+                // Debug: Verificar el item creado
+                print('Item creado:');
+                print('  - saboresIds: ${nuevoItem.saboresIds}');
+                print('  - presentacionId: ${nuevoItem.presentacionId}');
+                print('===========================');
+
+                _items.add(nuevoItem);
+              }
+            });
+          },
+        ),
+      );
+    } else {
+      // Para bebidas, agregar directamente
+      setState(() {
+        final uniqueId = '${producto.id}_${producto.presentacionId}';
+        final index = _items.indexWhere((item) => item.uniqueId == uniqueId);
+
+        if (index >= 0) {
+          _items[index].cantidad++;
+        } else {
+          _items.add(ItemPedido(
+            id: producto.id,
+            presentacionId: producto.presentacionId,
+            uniqueId: uniqueId,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            cantidad: 1,
+            categoria: categoria,
+            presentacion: producto.presentacion,
+            tipoProducto: producto.tipoProducto,
+            saborId: producto.id,
+          ));
+        }
+      });
+    }
+  }
+
+  void _editarSaboresPizza(int index) async {
+    final item = _items[index];
+
+    if (item.tipoProducto != 'PIZZA') return;
+
+    // Obtener la categoría de la pizza
+    String? categoria;
+    if (item.presentacion == 'PESO') categoria = 'PESO';
+    else if (item.presentacion == 'REDONDA') categoria = 'REDONDA';
+    else if (item.presentacion == 'BANDEJA') categoria = 'BANDEJA';
+
+    if (categoria == null) return;
+
+    final sabores = _productos[categoria] ?? [];
+    if (sabores.isEmpty) return;
+
+    // Reconstruir los sabores preseleccionados
+    List<ProductoDto>? saboresPreseleccionados;
+    if (item.saboresIds != null && item.saboresIds!.isNotEmpty) {
+      saboresPreseleccionados = item.saboresIds!
+          .map((id) => sabores.firstWhere(
+            (s) => s.id == id,
+        orElse: () => sabores.first,
+      ))
+          .toList();
+    }
+
+    // Mostrar diálogo
+    await showDialog(
+      context: context,
+      builder: (context) => SelectorSaboresDialog(
+        saboresDisponibles: sabores,
+        presentacion: categoria!,
+        saboresPreseleccionados: saboresPreseleccionados,
+        onConfirmar: (saboresSeleccionados) {
+          final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
+          final precioTotal = saboresSeleccionados.fold<double>(
+            0.0,
+                (sum, sabor) => sum + sabor.precio,
+          );
+          final precioPromedio = precioTotal / saboresSeleccionados.length;
+          String nombrePizza = saboresSeleccionados
+              .map((s) => s.nombre)
+              .join(' + ');
+
+          setState(() {
+            final uniqueId = '${item.presentacionId}_${saboresIds.join('_')}';
+
+            // Buscar si ya existe otra pizza con esta combinación
+            final existingIndex = _items.indexWhere(
+                    (i) => i.uniqueId == uniqueId && _items.indexOf(i) != index
+            );
+
+            if (existingIndex >= 0) {
+              // Si ya existe, sumar las cantidades y remover el item actual
+              _items[existingIndex].cantidad += item.cantidad;
+              _items.removeAt(index);
+            } else {
+              // Actualizar el item actual
+              _items[index] = ItemPedido(
+                id: saboresSeleccionados.first.id,
+                presentacionId: item.presentacionId,
+                uniqueId: uniqueId,
+                nombre: nombrePizza,
+                precio: precioPromedio,
+                cantidad: item.cantidad,
+                categoria: item.categoria,
+                presentacion: item.presentacion,
+                tipoProducto: item.tipoProducto,
+                saborId: saboresSeleccionados.first.id,
+                saboresIds: saboresIds,
+              );
+            }
+          });
+        },
+      ),
+    );
   }
 
   void _actualizarCantidad(int index, int delta) {
@@ -108,22 +330,91 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1024;
 
+    if (_isLoading) {
+      return CajeroLayout(
+        title: 'Crear Nuevo Pedido',
+        currentRoute: '/cajero/crear-pedido',
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: AppColors.secondary),
+              SizedBox(height: 16),
+              Text(
+                'Cargando menú...',
+                style: TextStyle(color: Colors.white70),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return CajeroLayout(
+        title: 'Crear Nuevo Pedido',
+        currentRoute: '/cajero/crear-pedido',
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.error.withOpacity(0.7),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Error al cargar el menú',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _cargarMenu,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return CajeroLayout(
       title: 'Crear Nuevo Pedido',
       currentRoute: '/cajero/crear-pedido',
       child: Row(
         children: [
-          // Panel principal - Selección de productos
           Expanded(
             flex: 2,
             child: Container(
               color: const Color(0xFF0A0A0A),
               child: Column(
                 children: [
-                  // Selector de categorías
                   _buildCategorySelector(),
-
-                  // Lista de productos
                   Expanded(
                     child: _categoriaSeleccionada == null
                         ? _buildEmptyState()
@@ -133,8 +424,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
               ),
             ),
           ),
-
-          // Panel lateral - Carrito
           if (isDesktop)
             Container(
               width: 380,
@@ -154,7 +443,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
         backgroundColor: AppColors.secondary,
         icon: const Icon(Icons.payment),
         label: Text(
-          'Cobrar \$${_total.toStringAsFixed(2)}',
+          'Cobrar Bs. ${_total.toStringAsFixed(2)}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       )
@@ -185,56 +474,59 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: _CategoryCard(
-                  emoji: '⚖️',
-                  title: 'PESO',
-                  subtitle: '${_productos['PESO']!.length} opciones',
-                  isSelected: _categoriaSeleccionada == 'PESO',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF6F00), Color(0xFFFF8F00)],
+              if (_productos.containsKey('PESO'))
+                Expanded(
+                  child: _CategoryCard(
+                    emoji: '⚖️',
+                    title: 'PESO',
+                    subtitle: '${_productos['PESO']!.length} opciones',
+                    isSelected: _categoriaSeleccionada == 'PESO',
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6F00), Color(0xFFFF8F00)],
+                    ),
+                    onTap: () {
+                      setState(() {
+                        _categoriaSeleccionada = 'PESO';
+                      });
+                    },
                   ),
-                  onTap: () {
-                    setState(() {
-                      _categoriaSeleccionada = 'PESO';
-                    });
-                  },
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _CategoryCard(
-                  emoji: '🍕',
-                  title: 'REDONDA',
-                  subtitle: '${_productos['REDONDA']!.length} opciones',
-                  isSelected: _categoriaSeleccionada == 'REDONDA',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFD32F2F), Color(0xFFE64A19)],
+              if (_productos.containsKey('PESO')) const SizedBox(width: 12),
+              if (_productos.containsKey('REDONDA'))
+                Expanded(
+                  child: _CategoryCard(
+                    emoji: '🍕',
+                    title: 'REDONDA',
+                    subtitle: '${_productos['REDONDA']!.length} opciones',
+                    isSelected: _categoriaSeleccionada == 'REDONDA',
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFD32F2F), Color(0xFFE64A19)],
+                    ),
+                    onTap: () {
+                      setState(() {
+                        _categoriaSeleccionada = 'REDONDA';
+                      });
+                    },
                   ),
-                  onTap: () {
-                    setState(() {
-                      _categoriaSeleccionada = 'REDONDA';
-                    });
-                  },
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _CategoryCard(
-                  emoji: '📦',
-                  title: 'BANDEJA',
-                  subtitle: '${_productos['BANDEJA']!.length} opciones',
-                  isSelected: _categoriaSeleccionada == 'BANDEJA',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF57C00), Color(0xFFFFB300)],
+              if (_productos.containsKey('REDONDA')) const SizedBox(width: 12),
+              if (_productos.containsKey('BANDEJA'))
+                Expanded(
+                  child: _CategoryCard(
+                    emoji: '📦',
+                    title: 'BANDEJA',
+                    subtitle: '${_productos['BANDEJA']!.length} opciones',
+                    isSelected: _categoriaSeleccionada == 'BANDEJA',
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF57C00), Color(0xFFFFB300)],
+                    ),
+                    onTap: () {
+                      setState(() {
+                        _categoriaSeleccionada = 'BANDEJA';
+                      });
+                    },
                   ),
-                  onTap: () {
-                    setState(() {
-                      _categoriaSeleccionada = 'BANDEJA';
-                    });
-                  },
                 ),
-              ),
             ],
           ),
         ],
@@ -275,14 +567,13 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
   }
 
   Widget _buildProductList() {
-    final productos = _productos[_categoriaSeleccionada]!;
+    final productos = _productos[_categoriaSeleccionada] ?? [];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Pizzas
           Text(
             'Pizzas - $_categoriaSeleccionada',
             style: TextStyle(
@@ -292,7 +583,19 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          GridView.builder(
+          productos.isEmpty
+              ? Padding(
+            padding: const EdgeInsets.all(32),
+            child: Center(
+              child: Text(
+                'No hay productos disponibles en esta categoría',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                ),
+              ),
+            ),
+          )
+              : GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -304,73 +607,77 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             itemCount: productos.length,
             itemBuilder: (context, index) {
               final producto = productos[index];
-              final cantidadEnCarrito = _items
-                  .firstWhere(
-                    (item) => item.id == producto['id'],
-                orElse: () => ItemPedido(
-                  id: 0,
-                  nombre: '',
-                  precio: 0,
-                  cantidad: 0,
-                  categoria: '',
-                ),
-              )
-                  .cantidad;
+              final uniqueId = '${producto.id}_${producto.presentacionId}';
+
+              // Buscar cantidad en carrito SIN crear item vacío
+              int cantidadEnCarrito = 0;
+              try {
+                final itemEnCarrito = _items.firstWhere(
+                      (item) => item.uniqueId == uniqueId,
+                );
+                cantidadEnCarrito = itemEnCarrito.cantidad;
+              } catch (e) {
+                // No existe en el carrito
+                cantidadEnCarrito = 0;
+              }
 
               return _ProductCard(
-                nombre: producto['nombre'],
-                precio: producto['precio'],
+                nombre: producto.nombre,
+                precio: producto.precio,
+                presentacion: producto.presentacion,
                 cantidadEnCarrito: cantidadEnCarrito,
                 onTap: () => _agregarItem(producto, _categoriaSeleccionada!),
               );
             },
           ),
           const SizedBox(height: 32),
-
-          // Bebidas
-          Text(
-            'Bebidas',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white.withOpacity(0.9),
+          if (_bebidas.isNotEmpty) ...[
+            Text(
+              'Bebidas',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white.withOpacity(0.9),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 200,
-              childAspectRatio: 0.85,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _bebidas.length,
-            itemBuilder: (context, index) {
-              final bebida = _bebidas[index];
-              final cantidadEnCarrito = _items
-                  .firstWhere(
-                    (item) => item.id == bebida['id'],
-                orElse: () => ItemPedido(
-                  id: 0,
-                  nombre: '',
-                  precio: 0,
-                  cantidad: 0,
-                  categoria: '',
-                ),
-              )
-                  .cantidad;
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _bebidas.length,
+              itemBuilder: (context, index) {
+                final bebida = _bebidas[index];
+                final uniqueId = '${bebida.id}_${bebida.presentacionId}';
 
-              return _ProductCard(
-                nombre: bebida['nombre'],
-                precio: bebida['precio'],
-                cantidadEnCarrito: cantidadEnCarrito,
-                onTap: () => _agregarItem(bebida, 'BEBIDAS'),
-                icon: Icons.local_drink,
-              );
-            },
-          ),
+                // Buscar cantidad en carrito SIN crear item vacío
+                int cantidadEnCarrito = 0;
+                try {
+                  final itemEnCarrito = _items.firstWhere(
+                        (item) => item.uniqueId == uniqueId,
+                  );
+                  cantidadEnCarrito = itemEnCarrito.cantidad;
+                } catch (e) {
+                  // No existe en el carrito
+                  cantidadEnCarrito = 0;
+                }
+
+                return _ProductCard(
+                  nombre: bebida.nombre,
+                  precio: bebida.precio,
+                  presentacion: bebida.presentacion,
+                  cantidadEnCarrito: cantidadEnCarrito,
+                  onTap: () => _agregarItem(bebida, 'BEBIDAS'),
+                  icon: Icons.local_drink,
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -379,7 +686,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
   Widget _buildCart() {
     return Column(
       children: [
-        // Header del carrito
         Container(
           padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(
@@ -437,8 +743,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             ],
           ),
         ),
-
-        // Lista de items
         Expanded(
           child: _items.isEmpty
               ? Center(
@@ -472,12 +776,13 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                 onIncrease: () => _actualizarCantidad(index, 1),
                 onDecrease: () => _actualizarCantidad(index, -1),
                 onDelete: () => _actualizarCantidad(index, -item.cantidad),
+                onEdit: item.tipoProducto == 'PIZZA'
+                    ? () => _editarSaboresPizza(index)
+                    : null,
               );
             },
           ),
         ),
-
-        // Notas para cocina
         Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
@@ -511,8 +816,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             ),
           ),
         ),
-
-        // Total y botón de cobrar
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -541,7 +844,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                     ),
                   ),
                   Text(
-                    '\$${_total.toStringAsFixed(2)}',
+                    'Bs. ${_total.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -550,34 +853,67 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                   ),
                 ],
               ),
+              // Botones
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _items.isEmpty ? null : _irACobro,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    disabledBackgroundColor: Colors.grey.shade800,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              Row(
+                children: [
+                  // Botón de debug (temporal)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        print('\n=== DEBUG ITEMS EN CARRITO ===');
+                        for (var item in _items) {
+                          print('Item: ${item.nombre}');
+                          print('  - uniqueId: ${item.uniqueId}');
+                          print('  - saboresIds: ${item.saboresIds}');
+                          print('  - tipoProducto: ${item.tipoProducto}');
+                          print('  - presentacionId: ${item.presentacionId}');
+                          print('---');
+                        }
+                        print('==============================\n');
+                      },
+                      icon: const Icon(Icons.bug_report, size: 16),
+                      label: const Text('Debug', style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.payment, size: 24),
-                      SizedBox(width: 12),
-                      Text(
-                        'Ir a Cobrar',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _items.isEmpty ? null : _irACobro,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondary,
+                          disabledBackgroundColor: Colors.grey.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.payment, size: 24),
+                            SizedBox(width: 12),
+                            Text(
+                              'Ir a Cobrar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -593,7 +929,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
   }
 }
 
-// Category Card Widget
+// Widgets auxiliares (sin cambios)
 class _CategoryCard extends StatelessWidget {
   final String emoji;
   final String title;
@@ -632,10 +968,7 @@ class _CategoryCard extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 40),
-                ),
+                Text(emoji, style: const TextStyle(fontSize: 40)),
                 const SizedBox(height: 12),
                 Text(
                   title,
@@ -662,10 +995,10 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
-// Product Card Widget
 class _ProductCard extends StatelessWidget {
   final String nombre;
   final double precio;
+  final String presentacion;
   final int cantidadEnCarrito;
   final VoidCallback onTap;
   final IconData? icon;
@@ -673,6 +1006,7 @@ class _ProductCard extends StatelessWidget {
   const _ProductCard({
     required this.nombre,
     required this.precio,
+    required this.presentacion,
     required this.cantidadEnCarrito,
     required this.onTap,
     this.icon,
@@ -738,7 +1072,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
                   nombre,
                   style: const TextStyle(
@@ -749,14 +1083,29 @@ class _ProductCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '\$${precio.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.secondary,
-                  ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Bs. ${precio.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      presentacion,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -767,18 +1116,19 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-// Cart Item Widget
 class _CartItem extends StatelessWidget {
   final ItemPedido item;
   final VoidCallback onIncrease;
   final VoidCallback onDecrease;
   final VoidCallback onDelete;
+  final VoidCallback? onEdit;
 
   const _CartItem({
     required this.item,
     required this.onIncrease,
     required this.onDecrease,
     required this.onDelete,
+    this.onEdit,
   });
 
   @override
@@ -809,7 +1159,7 @@ class _CartItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      item.categoria,
+                      '${item.tipoProducto} - ${item.presentacion}',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withOpacity(0.5),
@@ -818,6 +1168,17 @@ class _CartItem extends StatelessWidget {
                   ],
                 ),
               ),
+              // Botón de editar sabores (solo para pizzas)
+              if (onEdit != null)
+                IconButton(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, color: AppColors.warning),
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Editar sabores',
+                ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline, color: AppColors.error),
@@ -863,7 +1224,7 @@ class _CartItem extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '\$${(item.precio * item.cantidad).toStringAsFixed(2)}',
+                'Bs. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -876,21 +1237,4 @@ class _CartItem extends StatelessWidget {
       ),
     );
   }
-}
-
-// Modelo de Item de Pedido
-class ItemPedido {
-  final int id;
-  final String nombre;
-  final double precio;
-  int cantidad;
-  final String categoria;
-
-  ItemPedido({
-    required this.id,
-    required this.nombre,
-    required this.precio,
-    required this.cantidad,
-    required this.categoria,
-  });
 }

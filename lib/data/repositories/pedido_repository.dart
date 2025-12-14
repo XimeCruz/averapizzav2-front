@@ -11,7 +11,7 @@ class PedidoRepository {
   Future<Pedido> createPedido(CreatePedidoRequest request) async {
     try {
       final response = await _apiClient.post(
-        ApiConstants.pedidosCajero,
+        ApiConstants.realizarPedido,
         data: request.toJson(),
       );
       return Pedido.fromJson(response.data);
