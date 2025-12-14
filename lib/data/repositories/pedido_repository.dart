@@ -1,5 +1,9 @@
 // lib/data/repositories/pedido_repository.dart
 
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
+
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/pedido_model.dart';
@@ -16,7 +20,46 @@ class PedidoRepository {
       );
       return Pedido.fromJson(response.data);
     } catch (e) {
-      throw Exception('Error al crear pedido: ${e.toString()}');
+      print('═══ ERROR EN REPOSITORIO ═══');
+      print('Tipo de error: ${e.runtimeType}');
+      print('Error toString: ${e.toString()}');
+
+      // Si es DioException, intentar extraer la data del response
+      if (e.runtimeType.toString().contains('DioException') ||
+          e.toString().contains('DioException')) {
+        print('Es un DioException');
+
+        // Intentar acceder a la excepción original
+        try {
+          final dioError = e as dynamic;
+          if (dioError.response != null) {
+            print('Response existe');
+            print('Status code: ${dioError.response.statusCode}');
+            print('Response data: ${dioError.response.data}');
+
+            final responseData = dioError.response.data;
+            if (responseData != null) {
+              // Si es un Map, convertirlo a JSON string
+              if (responseData is Map<String, dynamic>) {
+                print('Response es Map, convirtiendo a JSON');
+                throw Exception(jsonEncode(responseData));
+              }
+              // Si es String, lanzarlo directamente
+              else if (responseData is String) {
+                print('Response es String');
+                throw Exception(responseData);
+              }
+            }
+          }
+        } catch (castError) {
+          print('Error al hacer cast: $castError');
+        }
+      }
+
+      // Si llegamos aquí, re-lanzar el error original
+      print('Re-lanzando error original');
+      print('═══════════════════════════');
+      rethrow;
     }
   }
 

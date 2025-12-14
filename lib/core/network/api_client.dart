@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
 import '../storage/secure_storage.dart';
@@ -127,9 +128,31 @@ class ApiClient {
 
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        final message = error.response?.data['message'] ??
-            error.response?.data['error'] ??
-            'Error desconocido';
+        final responseData = error.response?.data;
+
+        // Intentar extraer el mensaje del backend
+        String message = 'Error desconocido';
+
+        if (responseData != null) {
+          // Si es un Map, buscar los diferentes campos de mensaje
+          if (responseData is Map<String, dynamic>) {
+            // Buscar en orden: mensaje (español), message (inglés), error
+            message = responseData['mensaje']?.toString() ??
+                responseData['message']?.toString() ??
+                responseData['error']?.toString() ??
+                'Error desconocido';
+
+            // Si el backend envía un error estructurado (como STOCK_INSUFICIENTE)
+            // lanzar la excepción con el JSON completo para que el repositorio lo maneje
+            if (responseData.containsKey('tipo') && statusCode == 400) {
+              return Exception(jsonEncode(responseData));
+            }
+          }
+          // Si es String, usarlo directamente
+          else if (responseData is String) {
+            message = responseData;
+          }
+        }
 
         switch (statusCode) {
           case 400:

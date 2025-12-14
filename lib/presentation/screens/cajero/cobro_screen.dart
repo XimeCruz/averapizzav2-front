@@ -1,4 +1,4 @@
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
@@ -187,12 +187,238 @@ class _CobroScreenState extends State<CobroScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al procesar el pedido: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
+      // Parsear el error para obtener el mensaje del backend
+      String errorTitle = 'Error en el Pedido';
+      String errorMessage = 'Ha ocurrido un error al procesar el pedido';
+      String? errorDetails;
+      IconData errorIcon = Icons.error_outline;
+
+      try {
+        final errorString = e.toString();
+        print('═══════════════════════════════');
+        print('Error completo capturado:');
+        print(errorString);
+        print('═══════════════════════════════');
+
+        Map<String, dynamic>? errorData;
+
+        // Intentar parsear como JSON de diferentes formas
+
+        // Método 1: Buscar JSON dentro del string
+        if (errorString.contains('{') && errorString.contains('}')) {
+          final jsonStart = errorString.indexOf('{');
+          final jsonEnd = errorString.lastIndexOf('}') + 1;
+
+          if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            final jsonString = errorString.substring(jsonStart, jsonEnd);
+            print('JSON extraído: $jsonString');
+
+            try {
+              errorData = jsonDecode(jsonString) as Map<String, dynamic>;
+              print('JSON parseado exitosamente: $errorData');
+            } catch (jsonError) {
+              print('Error al parsear JSON método 1: $jsonError');
+            }
+          }
+        }
+
+        // Método 2: Buscar palabras clave directamente
+        if (errorData == null && errorString.contains('STOCK_INSUFICIENTE')) {
+          print('Detectado STOCK_INSUFICIENTE, extrayendo información...');
+
+          // Extraer información con regex
+          final regexInsumo = RegExp(r'insumo["\s:]+([^"]+)"');
+          final regexMensaje = RegExp(r'mensaje["\s:]+([^"]+(?:"[^"]*"[^"]*)*)"');
+          final regexStockActual = RegExp(r'stockActual["\s:]+([0-9.]+)');
+          final regexStockRequerido = RegExp(r'stockRequerido["\s:]+([0-9.]+)');
+
+          final matchInsumo = regexInsumo.firstMatch(errorString);
+          final matchMensaje = regexMensaje.firstMatch(errorString);
+          final matchStockActual = regexStockActual.firstMatch(errorString);
+          final matchStockRequerido = regexStockRequerido.firstMatch(errorString);
+
+          if (matchInsumo != null || matchMensaje != null) {
+            errorData = {
+              'tipo': 'STOCK_INSUFICIENTE',
+              'insumo': matchInsumo?.group(1)?.trim() ?? 'desconocido',
+              'mensaje': matchMensaje?.group(1)?.replaceAll(r'\"', '"')?.trim() ??
+                  'Stock insuficiente',
+              'stockActual': matchStockActual != null
+                  ? double.tryParse(matchStockActual.group(1)!) ?? 0
+                  : 0,
+              'stockRequerido': matchStockRequerido != null
+                  ? double.tryParse(matchStockRequerido.group(1)!) ?? 0
+                  : 0,
+            };
+            print('Datos extraídos con regex: $errorData');
+          }
+        }
+
+        // Si logramos obtener errorData, procesarlo
+        if (errorData != null) {
+          if (errorData['tipo'] == 'STOCK_INSUFICIENTE') {
+            errorTitle = '⚠️ Stock Insuficiente';
+            errorIcon = Icons.inventory_2_outlined;
+            errorMessage = errorData['mensaje']?.toString() ?? 'Stock insuficiente';
+
+            // Limpiar mensaje de caracteres de escape
+            errorMessage = errorMessage
+                .replaceAll(r'\"', '"')
+                .replaceAll(r'\n', '\n')
+                .trim();
+
+            // Formatear detalles
+            final insumo = errorData['insumo']?.toString() ?? 'desconocido';
+            final stockActual = (errorData['stockActual'] is num)
+                ? (errorData['stockActual'] as num).toStringAsFixed(2)
+                : '0.00';
+            final stockRequerido = (errorData['stockRequerido'] is num)
+                ? (errorData['stockRequerido'] as num).toStringAsFixed(2)
+                : '0.00';
+
+            errorDetails = 'Insumo: $insumo\n'
+                'Stock disponible: $stockActual kg\n'
+                'Stock requerido: $stockRequerido kg';
+
+            print('Mensaje final: $errorMessage');
+            print('Detalles: $errorDetails');
+          } else if (errorData['mensaje'] != null) {
+            errorMessage = errorData['mensaje'].toString()
+                .replaceAll(r'\"', '"')
+                .replaceAll(r'\n', '\n')
+                .trim();
+          }
+        }
+      } catch (parseError) {
+        print('Error en el parsing completo: $parseError');
+        print('Stack trace: ${parseError}');
+      }
+
+      print('═══════════════════════════════');
+      print('Mostrando diálogo con:');
+      print('Title: $errorTitle');
+      print('Message: $errorMessage');
+      print('Details: $errorDetails');
+      print('═══════════════════════════════');
+
+      // Mostrar diálogo de error
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  errorIcon,
+                  color: AppColors.error,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  errorTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.error.withOpacity(0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      errorMessage,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (errorDetails != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0A0A0A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          errorDetails,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Por favor, intenta con otro pedido o contacta al administrador.',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text(
+                'Entendido',
+                style: TextStyle(
+                  color: AppColors.secondary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }

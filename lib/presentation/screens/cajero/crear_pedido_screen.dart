@@ -858,30 +858,30 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
               Row(
                 children: [
                   // Botón de debug (temporal)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        print('\n=== DEBUG ITEMS EN CARRITO ===');
-                        for (var item in _items) {
-                          print('Item: ${item.nombre}');
-                          print('  - uniqueId: ${item.uniqueId}');
-                          print('  - saboresIds: ${item.saboresIds}');
-                          print('  - tipoProducto: ${item.tipoProducto}');
-                          print('  - presentacionId: ${item.presentacionId}');
-                          print('---');
-                        }
-                        print('==============================\n');
-                      },
-                      icon: const Icon(Icons.bug_report, size: 16),
-                      label: const Text('Debug', style: TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.orange,
-                        side: const BorderSide(color: Colors.orange),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
+                  // Expanded(
+                  //   child: OutlinedButton.icon(
+                  //     onPressed: () {
+                  //       print('\n=== DEBUG ITEMS EN CARRITO ===');
+                  //       for (var item in _items) {
+                  //         print('Item: ${item.nombre}');
+                  //         print('  - uniqueId: ${item.uniqueId}');
+                  //         print('  - saboresIds: ${item.saboresIds}');
+                  //         print('  - tipoProducto: ${item.tipoProducto}');
+                  //         print('  - presentacionId: ${item.presentacionId}');
+                  //         print('---');
+                  //       }
+                  //       print('==============================\n');
+                  //     },
+                  //     icon: const Icon(Icons.bug_report, size: 16),
+                  //     label: const Text('Debug', style: TextStyle(fontSize: 12)),
+                  //     style: OutlinedButton.styleFrom(
+                  //       foregroundColor: Colors.orange,
+                  //       side: const BorderSide(color: Colors.orange),
+                  //       padding: const EdgeInsets.symmetric(vertical: 12),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(width: 12),
                   Expanded(
                     flex: 3,
                     child: SizedBox(
