@@ -18,10 +18,13 @@ class CocinaScreen extends StatefulWidget {
   State<CocinaScreen> createState() => _CocinaScreenState();
 }
 
-class _CocinaScreenState extends State<CocinaScreen> {
+class _CocinaScreenState extends State<CocinaScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   Timer? _refreshTimer;
   Timer? _clockTimer;
   DateTime _currentTime = DateTime.now();
+  String _searchQuery = '';
 
   // Guardar tiempos de inicio de preparación
   final Map<int, DateTime> _tiemposInicio = {};
@@ -29,6 +32,7 @@ class _CocinaScreenState extends State<CocinaScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _loadPedidos();
     _startAutoRefresh();
 
@@ -77,22 +81,35 @@ class _CocinaScreenState extends State<CocinaScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         title: Row(
           children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4CAF50).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.restaurant,
+                color: Color(0xFF4CAF50),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
             const Text(
-              'A VERA PIZZA - COCINA',
+              'Cocina',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 2,
               ),
             ),
             const Spacer(),
+            // RELOJ EN TIEMPO REAL
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
@@ -111,7 +128,7 @@ class _CocinaScreenState extends State<CocinaScreen> {
                     DateFormat('HH:mm:ss').format(_currentTime),
                     style: const TextStyle(
                       color: Color(0xFF4CAF50),
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'monospace',
                     ),
@@ -123,12 +140,12 @@ class _CocinaScreenState extends State<CocinaScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh, color: Colors.white70),
             onPressed: _loadPedidos,
             tooltip: 'Actualizar',
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle, color: Colors.white),
+            icon: const Icon(Icons.account_circle, color: Colors.white70),
             color: const Color(0xFF2A2A2A),
             onSelected: (value) {
               if (value == 'logout') _logout();
@@ -171,185 +188,274 @@ class _CocinaScreenState extends State<CocinaScreen> {
             ],
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF4CAF50),
+          labelColor: const Color(0xFF4CAF50),
+          unselectedLabelColor: Colors.white60,
+          tabs: [
+            Consumer<PedidoProvider>(
+              builder: (context, provider, _) {
+                final count = provider.pedidosPendientes.length;
+                return Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.fiber_new, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('Nuevas'),
+                      if (count > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
+            Consumer<PedidoProvider>(
+              builder: (context, provider, _) {
+                final count = provider.pedidosEnPreparacion.length;
+                return Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.local_fire_department, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('En Cocina'),
+                      if (count > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF9800),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
+            const Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.history, size: 20),
+                  SizedBox(width: 8),
+                  Text('Historial'),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      body: Consumer<PedidoProvider>(
-        builder: (context, provider, _) {
-          if (provider.status == PedidoStatus.loading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF4CAF50)),
-            );
-          }
-
-          if (provider.status == PedidoStatus.error) {
-            return _buildErrorState(provider.errorMessage);
-          }
-
-          final pendientes = provider.pedidosPendientes
-            ..sort((a, b) => (a.fechaHora).compareTo(b.fechaHora));
-
-          final enPreparacion = provider.pedidosEnPreparacion
-            ..sort((a, b) => (a.fechaHora).compareTo(b.fechaHora));
-
-          final listos = provider.pedidosListos
-            ..sort((a, b) => (a.fechaHora).compareTo(b.fechaHora));
-
-          return Row(
-            children: [
-              // COLUMNA 1: NUEVAS
-              Expanded(
-                child: _buildColumna(
-                  titulo: 'NUEVAS',
-                  icono: Icons.fiber_new,
-                  color: const Color(0xFF4CAF50),
-                  count: pendientes.length,
-                  child: pendientes.isEmpty
-                      ? _buildEmptyState(
-                    icon: Icons.check_circle_outline,
-                    title: '¡Todo al día!',
-                    color: const Color(0xFF4CAF50),
-                  )
-                      : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: pendientes.length,
-                    itemBuilder: (context, index) {
-                      final pedido = pendientes[index];
-                      return _buildPedidoNuevoCard(
-                        context,
-                        pedido,
-                        provider,
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              Container(width: 2, color: const Color(0xFF1B5E20)),
-
-              // COLUMNA 2: EN COCINA
-              Expanded(
-                child: _buildColumna(
-                  titulo: 'EN COCINA',
-                  icono: Icons.local_fire_department,
-                  color: const Color(0xFFFF9800),
-                  count: enPreparacion.length,
-                  child: enPreparacion.isEmpty
-                      ? _buildEmptyState(
-                    icon: Icons.restaurant,
-                    title: 'Sin pedidos',
-                    color: const Color(0xFFFF9800),
-                  )
-                      : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: enPreparacion.length,
-                    itemBuilder: (context, index) {
-                      final pedido = enPreparacion[index];
-                      return _buildPedidoEnCocinaCard(
-                        context,
-                        pedido,
-                        provider,
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              Container(width: 2, color: const Color(0xFF1B5E20)),
-
-              // COLUMNA 3: LISTOS
-              Expanded(
-                child: _buildColumna(
-                  titulo: 'LISTOS',
-                  icono: Icons.check_circle,
-                  color: const Color(0xFF2196F3),
-                  count: listos.length,
-                  child: listos.isEmpty
-                      ? _buildEmptyState(
-                    icon: Icons.inbox_outlined,
-                    title: 'Sin pedidos',
-                    color: const Color(0xFF2196F3),
-                  )
-                      : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: listos.length,
-                    itemBuilder: (context, index) {
-                      final pedido = listos[index];
-                      return _buildPedidoListoCard(pedido);
-                    },
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildColumna({
-    required String titulo,
-    required IconData icono,
-    required Color color,
-    required int count,
-    required Widget child,
-  }) {
-    return Container(
-      color: Colors.black,
-      child: Column(
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              border: Border(bottom: BorderSide(color: color, width: 3)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icono, color: color, size: 24),
-                const SizedBox(width: 10),
-                Text(
-                  titulo,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$count',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(child: child),
+          _buildNuevasTab(),
+          _buildEnCocinaTab(),
+          _buildHistorialTab(),
         ],
       ),
     );
   }
 
-  // CARD: PEDIDO NUEVO (Compacto)
+  // TAB: NUEVAS
+  Widget _buildNuevasTab() {
+    return Consumer<PedidoProvider>(
+      builder: (context, provider, _) {
+        if (provider.status == PedidoStatus.loading) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF4CAF50)),
+          );
+        }
+
+        if (provider.status == PedidoStatus.error) {
+          return _buildErrorState(provider.errorMessage);
+        }
+
+        final pedidos = provider.pedidosPendientes
+          ..sort((a, b) => (a.fechaHora).compareTo(b.fechaHora));
+
+        if (pedidos.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.check_circle_outline,
+            title: '¡Todo al día!',
+            subtitle: 'No hay órdenes nuevas',
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async => _loadPedidos(),
+          backgroundColor: const Color(0xFF1A1A1A),
+          color: const Color(0xFF4CAF50),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: pedidos.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final pedido = pedidos[index];
+              return _buildPedidoNuevoCard(context, pedido, provider);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // TAB: EN COCINA
+  Widget _buildEnCocinaTab() {
+    return Consumer<PedidoProvider>(
+      builder: (context, provider, _) {
+        if (provider.status == PedidoStatus.loading) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF4CAF50)),
+          );
+        }
+
+        final pedidos = provider.pedidosEnPreparacion
+          ..sort((a, b) => (a.fechaHora).compareTo(b.fechaHora));
+
+        if (pedidos.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.restaurant,
+            title: 'Sin pedidos en cocina',
+            subtitle: 'Los pedidos tomados aparecerán aquí',
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async => _loadPedidos(),
+          backgroundColor: const Color(0xFF1A1A1A),
+          color: const Color(0xFF4CAF50),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: pedidos.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final pedido = pedidos[index];
+              return _buildPedidoEnCocinaCard(context, pedido, provider);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // TAB: HISTORIAL
+  Widget _buildHistorialTab() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1A1A1A),
+            border: Border(
+              bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1),
+            ),
+          ),
+          child: TextField(
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Buscar por número de pedido...',
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+              prefixIcon: const Icon(Icons.search, color: Colors.white60),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                icon: const Icon(Icons.clear, color: Colors.white60),
+                onPressed: () => setState(() => _searchQuery = ''),
+              )
+                  : null,
+              filled: true,
+              fillColor: const Color(0xFF0A0A0A),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                const BorderSide(color: Color(0xFF4CAF50), width: 2),
+              ),
+            ),
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+        ),
+        Expanded(
+          child: Consumer<PedidoProvider>(
+            builder: (context, provider, _) {
+              var pedidos = [...provider.pedidosListos];
+
+              if (_searchQuery.isNotEmpty) {
+                pedidos = pedidos
+                    .where((p) => p.id.toString().contains(_searchQuery))
+                    .toList();
+              }
+
+              pedidos.sort((a, b) => (b.id ?? 0).compareTo(a.id ?? 0));
+
+              if (pedidos.isEmpty) {
+                return _buildEmptyState(
+                  icon: Icons.history,
+                  title: _searchQuery.isNotEmpty
+                      ? 'No se encontraron pedidos'
+                      : 'Sin pedidos finalizados',
+                  subtitle: '',
+                );
+              }
+
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: pedidos.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final pedido = pedidos[index];
+                  return _buildPedidoHistorialCard(pedido);
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // CARD: PEDIDO NUEVO (Formato compacto como imagen 1 y 2)
   Widget _buildPedidoNuevoCard(
       BuildContext context,
       dynamic pedido,
       PedidoProvider provider,
       ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12),
@@ -358,11 +464,11 @@ class _CocinaScreenState extends State<CocinaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header con número y hora
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4CAF50),
                   borderRadius: BorderRadius.circular(6),
@@ -372,53 +478,36 @@ class _CocinaScreenState extends State<CocinaScreen> {
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
                 ),
               ),
-              const Spacer(),
-              Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.access_time,
+                size: 18,
+                color: Colors.grey[400],
+              ),
               const SizedBox(width: 4),
               Text(
                 DateFormat('HH:mm').format(pedido.fechaHora),
                 style: TextStyle(
                   color: Colors.grey[400],
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // Cliente y tipo
-          Row(
-            children: [
-              Icon(Icons.person, size: 14, color: Colors.grey[500]),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  pedido.usuarioNombre ?? 'Cliente',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 11,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
+              const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   pedido.getTipoServicioTexto(),
                   style: TextStyle(
                     color: Colors.grey[300],
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -426,17 +515,34 @@ class _CocinaScreenState extends State<CocinaScreen> {
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // Items
+          // Cliente
+          Row(
+            children: [
+              Icon(Icons.person, size: 16, color: Colors.grey[500]),
+              const SizedBox(width: 6),
+              Text(
+                pedido.usuarioNombre ?? 'Cliente',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Items (formato compacto)
           ...pedido.detalles.map<Widget>((item) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
                   Container(
-                    width: 26,
-                    height: 26,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: const Color(0xFF4CAF50).withOpacity(0.2),
                       borderRadius: BorderRadius.circular(6),
@@ -447,12 +553,12 @@ class _CocinaScreenState extends State<CocinaScreen> {
                         style: const TextStyle(
                           color: Color(0xFF4CAF50),
                           fontWeight: FontWeight.bold,
-                          fontSize: 11,
+                          fontSize: 13,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,18 +567,16 @@ class _CocinaScreenState extends State<CocinaScreen> {
                           item.getSaboresText(),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           item.presentacionNombre ?? 'Presentación',
                           style: TextStyle(
                             color: Colors.grey[500],
-                            fontSize: 10,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -483,12 +587,12 @@ class _CocinaScreenState extends State<CocinaScreen> {
             );
           }).toList(),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // Botón
+          // Botón Iniciar
           SizedBox(
             width: double.infinity,
-            height: 40,
+            height: 48,
             child: ElevatedButton(
               onPressed: () => _iniciarPreparacion(context, pedido, provider),
               style: ElevatedButton.styleFrom(
@@ -496,17 +600,16 @@ class _CocinaScreenState extends State<CocinaScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: EdgeInsets.zero,
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.play_arrow, size: 18),
-                  SizedBox(width: 6),
+                  Icon(Icons.play_arrow, size: 20),
+                  SizedBox(width: 8),
                   Text(
                     'INICIAR',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
                     ),
@@ -520,7 +623,7 @@ class _CocinaScreenState extends State<CocinaScreen> {
     );
   }
 
-  // CARD: PEDIDO EN COCINA (Con temporizador)
+  // CARD: PEDIDO EN COCINA (Formato como imagen 3 con temporizador)
   Widget _buildPedidoEnCocinaCard(
       BuildContext context,
       dynamic pedido,
@@ -535,8 +638,7 @@ class _CocinaScreenState extends State<CocinaScreen> {
     final colorTiempo = _getColorTiempo(pedido.id!);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF3A2F1F),
         borderRadius: BorderRadius.circular(12),
@@ -545,11 +647,11 @@ class _CocinaScreenState extends State<CocinaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con temporizador
+          // Header con número, hora y temporizador
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF9800),
                   borderRadius: BorderRadius.circular(6),
@@ -559,64 +661,63 @@ class _CocinaScreenState extends State<CocinaScreen> {
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
                 ),
               ),
-              const Spacer(),
-              Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.access_time,
+                size: 18,
+                color: Colors.grey[400],
+              ),
               const SizedBox(width: 4),
               Text(
                 DateFormat('HH:mm').format(pedido.fechaHora),
                 style: TextStyle(
                   color: Colors.grey[400],
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const Spacer(),
+              // TEMPORIZADOR GRANDE
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colorTiempo,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.timer, color: Colors.white, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      tiempoTranscurrido,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
 
-          // TEMPORIZADOR DESTACADO
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: colorTiempo,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.timer, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    tiempoTranscurrido,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Items
+          // Items (formato compacto)
           ...pedido.detalles.map<Widget>((item) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
                   Container(
-                    width: 26,
-                    height: 26,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: const Color(0xFF5A4A2F),
                       borderRadius: BorderRadius.circular(6),
@@ -627,12 +728,12 @@ class _CocinaScreenState extends State<CocinaScreen> {
                         style: const TextStyle(
                           color: Color(0xFFFF9800),
                           fontWeight: FontWeight.bold,
-                          fontSize: 11,
+                          fontSize: 13,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,18 +742,16 @@ class _CocinaScreenState extends State<CocinaScreen> {
                           item.getSaboresText(),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           item.presentacionNombre ?? 'Presentación',
                           style: TextStyle(
                             color: Colors.grey[400],
-                            fontSize: 10,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -663,12 +762,12 @@ class _CocinaScreenState extends State<CocinaScreen> {
             );
           }).toList(),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // Botón
+          // Botón Marcar Listo
           SizedBox(
             width: double.infinity,
-            height: 40,
+            height: 48,
             child: ElevatedButton(
               onPressed: () => _marcarListo(context, pedido, provider),
               style: ElevatedButton.styleFrom(
@@ -676,17 +775,16 @@ class _CocinaScreenState extends State<CocinaScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: EdgeInsets.zero,
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, size: 18),
-                  SizedBox(width: 6),
+                  Icon(Icons.check_circle, size: 20),
+                  SizedBox(width: 8),
                   Text(
                     'MARCAR LISTO',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
                     ),
@@ -700,11 +798,10 @@ class _CocinaScreenState extends State<CocinaScreen> {
     );
   }
 
-  // CARD: PEDIDO LISTO (Compacto)
-  Widget _buildPedidoListoCard(dynamic pedido) {
+  // CARD: HISTORIAL (Formato compacto como imagen 1)
+  Widget _buildPedidoHistorialCard(dynamic pedido) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12),
@@ -713,18 +810,18 @@ class _CocinaScreenState extends State<CocinaScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF2196F3).withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFF4CAF50).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.check_circle,
-              color: Color(0xFF2196F3),
-              size: 20,
+              color: Color(0xFF4CAF50),
+              size: 24,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,28 +829,26 @@ class _CocinaScreenState extends State<CocinaScreen> {
                 Text(
                   'PEDIDO #${pedido.id}',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
                   DateFormat('HH:mm').format(pedido.fechaHora),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     color: Colors.grey[500],
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
-                  '${pedido.detalles.length}x ${pedido.detalles.isNotEmpty ? pedido.detalles.first.getSaboresText() : ""}',
+                  '${pedido.detalles.length}x ${pedido.detalles.first.getSaboresText()}',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     color: Colors.grey[400],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -768,22 +863,32 @@ class _CocinaScreenState extends State<CocinaScreen> {
   Widget _buildEmptyState({
     required IconData icon,
     required String title,
-    required Color color,
+    required String subtitle,
   }) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 50, color: color.withOpacity(0.3)),
-          const SizedBox(height: 12),
+          Icon(icon, size: 80, color: Colors.white.withOpacity(0.3)),
+          const SizedBox(height: 16),
           Text(
             title,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
+          if (subtitle.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.6),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -797,7 +902,7 @@ class _CocinaScreenState extends State<CocinaScreen> {
           const Icon(Icons.error_outline, size: 60, color: Colors.red),
           const SizedBox(height: 16),
           const Text(
-            'Error al cargar',
+            'Error al cargar pedidos',
             style: TextStyle(fontSize: 18, color: Colors.white),
           ),
           const SizedBox(height: 8),
@@ -821,6 +926,16 @@ class _CocinaScreenState extends State<CocinaScreen> {
         ],
       ),
     );
+  }
+
+  bool _esPedidoRetrasado(dynamic pedido) {
+    try {
+      final now = DateTime.now();
+      final tiempoTranscurrido = now.difference(pedido.fechaHora);
+      return tiempoTranscurrido.inMinutes > 15;
+    } catch (e) {
+      return false;
+    }
   }
 
   String _getTiempoPreparacion(int pedidoId) {
@@ -1019,6 +1134,7 @@ class _CocinaScreenState extends State<CocinaScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _refreshTimer?.cancel();
     _clockTimer?.cancel();
     super.dispose();
