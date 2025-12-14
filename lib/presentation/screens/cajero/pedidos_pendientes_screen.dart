@@ -13,7 +13,8 @@ class PedidosPendientesScreen extends StatefulWidget {
   const PedidosPendientesScreen({super.key});
 
   @override
-  State<PedidosPendientesScreen> createState() => _PedidosPendientesScreenState();
+  State<PedidosPendientesScreen> createState() =>
+      _PedidosPendientesScreenState();
 }
 
 class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
@@ -30,7 +31,9 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
   Future<void> _loadData() async {
     try {
       print('Cargando pedidos PENDIENTES...');
-      await context.read<PedidoProvider>().loadPedidosByEstado(EstadoPedido.PENDIENTE);
+      await context.read<PedidoProvider>().loadPedidosByEstado(
+        EstadoPedido.PENDIENTE,
+      );
       print('Pedidos cargados');
     } catch (e) {
       print('Error cargando pedidos: $e');
@@ -66,7 +69,9 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final success = await context.read<PedidoProvider>().tomarPedido(pedido.id!);
+    final success = await context.read<PedidoProvider>().tomarPedido(
+      pedido.id!,
+    );
 
     if (!mounted) return;
 
@@ -103,7 +108,9 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final success = await context.read<PedidoProvider>().cancelarPedido(pedido.id!);
+    final success = await context.read<PedidoProvider>().cancelarPedido(
+      pedido.id!,
+    );
 
     if (!mounted) return;
 
@@ -148,14 +155,18 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
             child: Consumer<PedidoProvider>(
               builder: (context, provider, _) {
                 print('=== DEBUG PEDIDOS PENDIENTES ===');
-                print('Total pedidos pendientes: ${provider.pedidosPendientes.length}');
+                print(
+                  'Total pedidos pendientes: ${provider.pedidosPendientes.length}',
+                );
 
                 if (provider.status == PedidoStatus.loading) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const CircularProgressIndicator(color: AppColors.warning),
+                        const CircularProgressIndicator(
+                          color: AppColors.warning,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Cargando pedidos...',
@@ -170,8 +181,11 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
 
                 // Usar pedidosPendientes del provider
                 final pedidos = provider.pedidosPendientes
-                    .where((p) => _searchQuery.isEmpty ||
-                    (p.id?.toString().contains(_searchQuery) ?? false))
+                    .where(
+                      (p) =>
+                          _searchQuery.isEmpty ||
+                          (p.id?.toString().contains(_searchQuery) ?? false),
+                    )
                     .toList();
 
                 print('Pedidos después de búsqueda: ${pedidos.length}');
@@ -228,9 +242,7 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1)),
       ),
       child: TextField(
         style: const TextStyle(color: Colors.white),
@@ -240,11 +252,11 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
           prefixIcon: const Icon(Icons.search, color: Colors.white60),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.clear, color: Colors.white60),
-            onPressed: () {
-              setState(() => _searchQuery = '');
-            },
-          )
+                  icon: const Icon(Icons.clear, color: Colors.white60),
+                  onPressed: () {
+                    setState(() => _searchQuery = '');
+                  },
+                )
               : null,
           filled: true,
           fillColor: const Color(0xFF0A0A0A),
@@ -328,6 +340,8 @@ class _PedidoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ancho = MediaQuery.of(context).size.width;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
@@ -338,12 +352,12 @@ class _PedidoCard extends StatelessWidget {
         ),
         boxShadow: showPulse
             ? [
-          BoxShadow(
-            color: statusColor.withOpacity(0.3),
-            blurRadius: 12,
-            spreadRadius: 2,
-          ),
-        ]
+                BoxShadow(
+                  color: statusColor.withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ]
             : null,
       ),
       child: Column(
@@ -398,7 +412,11 @@ class _PedidoCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(statusIcon, size: 16, color: statusColor),
+                                  Icon(
+                                    statusIcon,
+                                    size: 16,
+                                    color: statusColor,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     statusText,
@@ -471,14 +489,15 @@ class _PedidoCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        'Bs. ${pedido.total.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.secondary,
+                      if (ancho > 600)
+                        Text(
+                          'Bs. ${pedido.total.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secondary,
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 4),
                       Icon(
                         Icons.chevron_right,
@@ -490,55 +509,70 @@ class _PedidoCard extends StatelessWidget {
               ),
             ),
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (ancho < 600)
+              Padding(padding:  const EdgeInsets.only(right: 10),
+                child: Text(
+                  'Total: Bs. ${pedido.total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.secondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
 
           // Separador
-          const Divider(
-            height: 1,
-            color: Color(0xFF2A2A2A),
-          ),
+          const Divider(height: 1, color: Color(0xFF2A2A2A)),
 
           // Botones de acción
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: actions
-                  .map((action) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: action.isPrimary
-                      ? ElevatedButton.icon(
-                    onPressed: action.onTap,
-                    icon: Icon(action.icon, size: 18),
-                    label: Text(action.label),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: action.color,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  .map(
+                    (action) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: action.isPrimary
+                            ? ElevatedButton.icon(
+                                onPressed: action.onTap,
+                                icon: Icon(action.icon, size: 18),
+                                label: Text(action.label),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: action.color,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              )
+                            : OutlinedButton.icon(
+                                onPressed: action.onTap,
+                                icon: Icon(action.icon, size: 18),
+                                label: Text(action.label),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: action.color,
+                                  side: BorderSide(
+                                    color: action.color.withOpacity(0.5),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                   )
-                      : OutlinedButton.icon(
-                    onPressed: action.onTap,
-                    icon: Icon(action.icon, size: 18),
-                    label: Text(action.label),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: action.color,
-                      side: BorderSide(
-                        color: action.color.withOpacity(0.5),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ))
                   .toList(),
             ),
           ),
@@ -583,9 +617,7 @@ class _ConfirmDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -670,9 +702,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
         child: Column(
@@ -797,7 +827,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
                       final sabores = [
                         detalle.sabor1Nombre,
                         detalle.sabor2Nombre,
-                        detalle.sabor3Nombre
+                        detalle.sabor3Nombre,
                       ].where((s) => s != null && s.isNotEmpty).join(', ');
 
                       return Container(

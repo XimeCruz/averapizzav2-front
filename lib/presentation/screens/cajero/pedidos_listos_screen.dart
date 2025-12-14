@@ -301,6 +301,9 @@ class _PedidoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final ancho = MediaQuery.of(context).size.width;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
@@ -444,6 +447,7 @@ class _PedidoCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      if (ancho > 600)
                       Text(
                         'Bs. ${pedido.total.toStringAsFixed(2)}',
                         style: const TextStyle(
@@ -462,6 +466,22 @@ class _PedidoCard extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (ancho < 600)
+              Padding(padding:  const EdgeInsets.only(right: 10),
+                child: Text(
+                  'Total: Bs. ${pedido.total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.secondary,
+                  ),
+                ),
+              ),
+            ],
           ),
 
           // Separador
