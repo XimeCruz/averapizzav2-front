@@ -401,39 +401,39 @@ class _SaborCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.touch_app,
-                        size: 18,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Toca para ver precios y receta',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // InkWell(
+              //   onTap: onTap,
+              //   borderRadius: BorderRadius.circular(8),
+              //   child: Container(
+              //     padding: const EdgeInsets.all(12),
+              //     decoration: BoxDecoration(
+              //       color: AppColors.primary.withOpacity(0.1),
+              //       borderRadius: BorderRadius.circular(8),
+              //       border: Border.all(
+              //         color: AppColors.primary.withOpacity(0.3),
+              //       ),
+              //     ),
+              //     child: const Row(
+              //       mainAxisAlignment: MainAxisAlignment.center,
+              //       children: [
+              //         Icon(
+              //           Icons.touch_app,
+              //           size: 18,
+              //           color: AppColors.primary,
+              //         ),
+              //         SizedBox(width: 8),
+              //         Text(
+              //           'Toca para ver precios y receta',
+              //           style: TextStyle(
+              //             fontSize: 13,
+              //             color: AppColors.primary,
+              //             fontWeight: FontWeight.w500,
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

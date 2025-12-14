@@ -93,15 +93,19 @@ class CreateRecetaRequest {
 class RecetaInsumoItem {
   final int insumoId;
   final double cantidad;
+  final int? presentacionId;
+
 
   RecetaInsumoItem({
     required this.insumoId,
     required this.cantidad,
+    this.presentacionId,
   });
 
   Map<String, dynamic> toJson() => {
     'insumoId': insumoId,
     'cantidad': cantidad,
+    if (presentacionId != null) 'presentacionId': presentacionId,
   };
 }
 

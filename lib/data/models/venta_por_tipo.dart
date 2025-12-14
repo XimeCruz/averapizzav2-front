@@ -15,7 +15,7 @@ class VentaPorTipo {
     return VentaPorTipo(
       tipoServicio: json['tipoServicio'] ?? '',
       cantidad: json['cantidadVentas'] ?? 0,
-      monto: (json['totalGenerado'] ?? 0).toDouble(),
+      monto: (json['total'] ?? 0).toDouble(),
     );
   }
 
