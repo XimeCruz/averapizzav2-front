@@ -28,9 +28,9 @@ class _PedidosListosScreenState extends State<PedidosListosScreen> {
 
   Future<void> _loadData() async {
     try {
-      print('🔄 Cargando pedidos LISTOS...');
+      print('Cargando pedidos LISTOS...');
       await context.read<PedidoProvider>().loadPedidosByEstado(EstadoPedido.LISTO);
-      print('✅ Pedidos cargados');
+      print('Pedidos cargados');
     } catch (e) {
       print('❌ Error cargando pedidos: $e');
       if (mounted) {
@@ -65,20 +65,28 @@ class _PedidosListosScreenState extends State<PedidosListosScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    // Aquí iría la lógica para cambiar el estado
-    // await context.read<PedidoProvider>().cambiarEstado(pedido.id!, EstadoPedido.ENTREGADO);
+    final success = await context.read<PedidoProvider>().entregarPedido(pedido.id!);
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Pedido #${pedido.id} entregado'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    _loadData();
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Pedido #${pedido.id} entregado'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      _loadData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Error al marcar el pedido como entregado'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _reimprimirTicket(Pedido pedido) {
