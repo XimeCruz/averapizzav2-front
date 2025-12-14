@@ -129,7 +129,9 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
     if (_rangoFechas != null) {
       resultado = resultado.where((p) {
         final fecha = p.fechaHora;
-        return fecha.isAfter(_rangoFechas!.start.subtract(const Duration(days: 1))) &&
+        return fecha.isAfter(
+              _rangoFechas!.start.subtract(const Duration(days: 1)),
+            ) &&
             fecha.isBefore(_rangoFechas!.end.add(const Duration(days: 1)));
       }).toList();
     }
@@ -189,7 +191,9 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const CircularProgressIndicator(color: AppColors.secondary),
+                        const CircularProgressIndicator(
+                          color: AppColors.secondary,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Cargando historial...',
@@ -202,7 +206,9 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
                   );
                 }
 
-                final pedidosFiltrados = _filtrarYOrdenarPedidos(provider.pedidos);
+                final pedidosFiltrados = _filtrarYOrdenarPedidos(
+                  provider.pedidos,
+                );
 
                 print('Pedidos filtrados: ${pedidosFiltrados.length}');
 
@@ -241,9 +247,7 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
         color: Color(0xFF1A1A1A),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1)),
       ),
       child: Column(
         children: [
@@ -255,11 +259,11 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
               prefixIcon: const Icon(Icons.search, color: Colors.white60),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                icon: const Icon(Icons.clear, color: Colors.white60),
-                onPressed: () {
-                  setState(() => _searchQuery = '');
-                },
-              )
+                      icon: const Icon(Icons.clear, color: Colors.white60),
+                      onPressed: () {
+                        setState(() => _searchQuery = '');
+                      },
+                    )
                   : null,
               filled: true,
               fillColor: const Color(0xFF0A0A0A),
@@ -273,7 +277,10 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.secondary, width: 2),
+                borderSide: const BorderSide(
+                  color: AppColors.secondary,
+                  width: 2,
+                ),
               ),
             ),
             onChanged: (value) {
@@ -359,17 +366,15 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
           if (_rangoFechas != null)
             Chip(
               label: Text(
-                  '${DateFormat('dd/MM/yy').format(_rangoFechas!.start)} - ${DateFormat('dd/MM/yy').format(_rangoFechas!.end)}'),
+                '${DateFormat('dd/MM/yy').format(_rangoFechas!.start)} - ${DateFormat('dd/MM/yy').format(_rangoFechas!.end)}',
+              ),
               deleteIcon: const Icon(Icons.close, size: 18),
               onDeleted: () {
                 setState(() => _rangoFechas = null);
               },
               backgroundColor: AppColors.info.withOpacity(0.2),
               deleteIconColor: AppColors.info,
-              labelStyle: const TextStyle(
-                color: AppColors.info,
-                fontSize: 12,
-              ),
+              labelStyle: const TextStyle(color: AppColors.info, fontSize: 12),
             ),
         ],
       ),
@@ -381,11 +386,7 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history,
-            size: 80,
-            color: Colors.white.withOpacity(0.3),
-          ),
+          Icon(Icons.history, size: 80, color: Colors.white.withOpacity(0.3)),
           const SizedBox(height: 16),
           Text(
             'No hay pedidos en el historial',
@@ -444,8 +445,14 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.pending_actions, color: AppColors.warning),
-              title: const Text('Pendientes', style: TextStyle(color: Colors.white)),
+              leading: const Icon(
+                Icons.pending_actions,
+                color: AppColors.warning,
+              ),
+              title: const Text(
+                'Pendientes',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 setState(() => _filtroEstado = EstadoPedido.PENDIENTE);
                 Navigator.pop(context);
@@ -453,7 +460,10 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.restaurant, color: AppColors.info),
-              title: const Text('En Cocina', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'En Cocina',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 setState(() => _filtroEstado = EstadoPedido.EN_PREPARACION);
                 Navigator.pop(context);
@@ -461,7 +471,10 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.check_circle, color: AppColors.success),
-              title: const Text('Listos', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Listos',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 setState(() => _filtroEstado = EstadoPedido.LISTO);
                 Navigator.pop(context);
@@ -469,7 +482,10 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.done_all, color: AppColors.success),
-              title: const Text('Entregados', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Entregados',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 setState(() => _filtroEstado = EstadoPedido.ENTREGADO);
                 Navigator.pop(context);
@@ -477,7 +493,10 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.cancel, color: AppColors.error),
-              title: const Text('Cancelados', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Cancelados',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 setState(() => _filtroEstado = EstadoPedido.CANCELADO);
                 Navigator.pop(context);
@@ -526,8 +545,14 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.access_time, color: AppColors.secondary),
-              title: const Text('Más reciente', style: TextStyle(color: Colors.white)),
+              leading: const Icon(
+                Icons.access_time,
+                color: AppColors.secondary,
+              ),
+              title: const Text(
+                'Más reciente',
+                style: TextStyle(color: Colors.white),
+              ),
               trailing: _ordenarPor == 'reciente'
                   ? const Icon(Icons.check, color: AppColors.secondary)
                   : null,
@@ -538,7 +563,10 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.history, color: AppColors.secondary),
-              title: const Text('Más antiguo', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Más antiguo',
+                style: TextStyle(color: Colors.white),
+              ),
               trailing: _ordenarPor == 'antiguo'
                   ? const Icon(Icons.check, color: AppColors.secondary)
                   : null,
@@ -548,8 +576,14 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.arrow_upward, color: AppColors.secondary),
-              title: const Text('Monto mayor', style: TextStyle(color: Colors.white)),
+              leading: const Icon(
+                Icons.arrow_upward,
+                color: AppColors.secondary,
+              ),
+              title: const Text(
+                'Monto mayor',
+                style: TextStyle(color: Colors.white),
+              ),
               trailing: _ordenarPor == 'monto_mayor'
                   ? const Icon(Icons.check, color: AppColors.secondary)
                   : null,
@@ -559,8 +593,14 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.arrow_downward, color: AppColors.secondary),
-              title: const Text('Monto menor', style: TextStyle(color: Colors.white)),
+              leading: const Icon(
+                Icons.arrow_downward,
+                color: AppColors.secondary,
+              ),
+              title: const Text(
+                'Monto menor',
+                style: TextStyle(color: Colors.white),
+              ),
               trailing: _ordenarPor == 'monto_menor'
                   ? const Icon(Icons.check, color: AppColors.secondary)
                   : null,
@@ -661,15 +701,14 @@ class _FilterButton extends StatelessWidget {
       label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: isActive ? AppColors.secondary : Colors.white70,
-        backgroundColor:
-        isActive ? AppColors.secondary.withOpacity(0.1) : Colors.transparent,
+        backgroundColor: isActive
+            ? AppColors.secondary.withOpacity(0.1)
+            : Colors.transparent,
         side: BorderSide(
           color: isActive ? AppColors.secondary : const Color(0xFF2A2A2A),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -692,6 +731,9 @@ class _HistorialPedidoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
+    final ancho = MediaQuery.of(context).size.width;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
@@ -761,31 +803,54 @@ class _HistorialPedidoCard extends StatelessWidget {
                         color: Colors.white.withOpacity(0.6),
                       ),
                     ),
+                    if (ancho < 600)
+                      Row(
+                        children: [
+                          Text(
+                            'Bs. ${pedido.total.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          IconButton(
+                            onPressed: onReimprimir,
+                            icon: const Icon(Icons.print, size: 20),
+                            color: AppColors.info,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            tooltip: 'Reimprimir',
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Bs. ${pedido.total.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.secondary,
+              if (ancho > 600)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Bs. ${pedido.total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  IconButton(
-                    onPressed: onReimprimir,
-                    icon: const Icon(Icons.print, size: 20),
-                    color: AppColors.info,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    tooltip: 'Reimprimir',
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 4),
+                    IconButton(
+                      onPressed: onReimprimir,
+                      icon: const Icon(Icons.print, size: 20),
+                      color: AppColors.info,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Reimprimir',
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -956,7 +1021,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
                       final sabores = [
                         detalle.sabor1Nombre,
                         detalle.sabor2Nombre,
-                        detalle.sabor3Nombre
+                        detalle.sabor3Nombre,
                       ].where((s) => s != null && s.isNotEmpty).join(', ');
 
                       return Container(
@@ -1097,7 +1162,8 @@ class _EstadisticasDialog extends StatelessWidget {
 
     final pedidosPorEstado = <EstadoPedido, int>{};
     for (var pedido in pedidos) {
-      pedidosPorEstado[pedido.estado] = (pedidosPorEstado[pedido.estado] ?? 0) + 1;
+      pedidosPorEstado[pedido.estado] =
+          (pedidosPorEstado[pedido.estado] ?? 0) + 1;
     }
 
     return Dialog(
