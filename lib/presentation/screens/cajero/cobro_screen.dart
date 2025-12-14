@@ -1,12 +1,11 @@
-// lib/presentation/screens/cajero/cobro_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../data/models/item_pedido.dart';
+import '../../../data/repositories/pedido_repository.dart';
+import '../../../data/models/pedido_model.dart';
 import '../../layouts/cajero_layout.dart';
-import 'crear_pedido_screen.dart';
-
-enum MetodoPago { EFECTIVO, QR, TARJETA }
 
 class CobroScreen extends StatefulWidget {
   final List<ItemPedido> items;
@@ -23,9 +22,28 @@ class CobroScreen extends StatefulWidget {
 }
 
 class _CobroScreenState extends State<CobroScreen> {
+  final PedidoRepository _pedidoRepository = PedidoRepository();
+
   MetodoPago? _metodoPagoSeleccionado;
+  TipoServicio _tipoServicioSeleccionado = TipoServicio.MESA;
   final TextEditingController _montoRecibidoController = TextEditingController();
+  final TextEditingController _numeroMesaController = TextEditingController();
   bool _procesandoPago = false;
+
+// TODO: Obtener el usuarioId del usuario logueado
+  final int _usuarioId = 1; // Temporal - debería venir de SharedPreferences o estado global
+
+  @override
+  void initState() {
+    super.initState();
+// Listener para actualizar el estado cuando cambien los valores
+    _montoRecibidoController.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _numeroMesaController.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
 
   double get _total {
     return widget.items.fold(
@@ -44,11 +62,32 @@ class _CobroScreenState extends State<CobroScreen> {
   }
 
   bool get _puedeConfirmar {
+// Debe tener método de pago seleccionado
     if (_metodoPagoSeleccionado == null) return false;
+
+// Si es servicio en mesa, debe tener número de mesa
+    if (_tipoServicioSeleccionado == TipoServicio.MESA &&
+        _numeroMesaController.text
+            .trim()
+            .isEmpty) {
+      return false;
+    }
+
+// Si es efectivo, debe tener monto suficiente
     if (_metodoPagoSeleccionado == MetodoPago.EFECTIVO) {
       return _montoRecibido >= _total;
     }
+
+// Para QR y Tarjeta, solo necesita método seleccionado
     return true;
+  }
+
+  String _convertirMetodoPago(MetodoPago metodo) {
+    return metodo.name;
+  }
+
+  String _convertirTipoServicio(TipoServicio tipo) {
+    return tipo.name;
   }
 
   void _confirmarPago() async {
@@ -56,38 +95,90 @@ class _CobroScreenState extends State<CobroScreen> {
 
     setState(() => _procesandoPago = true);
 
-    // Simular procesamiento
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+// Separar pizzas y otros productos (bebidas)
+      final pizzas = widget.items.where((item) => item.esPizza).toList();
+      final bebidas = widget.items.where((item) => !item.esPizza).toList();
 
-    if (!mounted) return;
+// Crear request
+      final request = CreatePedidoRequest(
+        usuarioId: _usuarioId,
+        tipoServicio: _tipoServicioSeleccionado,
+        metodoPago: _convertirMetodoPago(_metodoPagoSeleccionado!),
+        detalles: bebidas.map((item) =>
+            DetallePedidoRequest(
+              productoId: item.id,
+              presentacionId: item.presentacionId,
+              saborId: item.saborId ?? 0,
+              cantidad: item.cantidad,
+            )).toList(),
+        pizzas: pizzas.map((item) =>
+            PizzaPedidoItem(
+              presentacionId: item.presentacionId,
+              sabor1Id: item.saborId ?? item.id,
+              sabor2Id: 0,
+              sabor3Id: 0,
+              pesoKg: item.pesoKg,
+              cantidad: item.cantidad,
+            )).toList(),
+      );
 
-    // Mostrar confirmación
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _SuccessDialog(
-        total: _total,
-        metodoPago: _metodoPagoSeleccionado!,
-        vuelto: _vuelto,
-      ),
-    ).then((_) {
-      // Volver al dashboard
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    });
+// Enviar pedido al backend
+      final pedido = await _pedidoRepository.createPedido(request);
+
+      if (!mounted) return;
+
+// Mostrar confirmación
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) =>
+            _SuccessDialog(
+              pedidoId: pedido.id ?? 0,
+              total: _total,
+              metodoPago: _metodoPagoSeleccionado!,
+              vuelto: _vuelto,
+              tipoServicio: _tipoServicioSeleccionado,
+              numeroMesa: _numeroMesaController.text,
+            ),
+      ).then((_) {
+// Volver al dashboard
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      });
+    } catch (e) {
+      setState(() => _procesandoPago = false);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al procesar el pedido: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   void _setMontoExacto() {
-    _montoRecibidoController.text = _total.toStringAsFixed(2);
+    setState(() {
+      _montoRecibidoController.text = _total.toStringAsFixed(2);
+    });
   }
 
   void _agregarMonto(double monto) {
-    final actual = _montoRecibido;
-    _montoRecibidoController.text = (actual + monto).toStringAsFixed(2);
+    setState(() {
+      final actual = _montoRecibido;
+      _montoRecibidoController.text = (actual + monto).toStringAsFixed(2);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery
+        .of(context)
+        .size;
     final isDesktop = size.width > 1024;
 
     return CajeroLayout(
@@ -95,7 +186,6 @@ class _CobroScreenState extends State<CobroScreen> {
       currentRoute: '/cajero/cobro',
       child: Row(
         children: [
-          // Panel izquierdo - Métodos de pago
           Expanded(
             flex: 2,
             child: Container(
@@ -105,19 +195,29 @@ class _CobroScreenState extends State<CobroScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Métodos de pago
+// Tipo de servicio
+                    _buildServiceType(),
+                    const SizedBox(height: 24),
+
+// Número de mesa si es MESA
+                    if (_tipoServicioSeleccionado == TipoServicio.MESA)
+                      _buildTableNumber(),
+                    if (_tipoServicioSeleccionado == TipoServicio.MESA)
+                      const SizedBox(height: 24),
+
+// Métodos de pago
                     _buildPaymentMethods(),
                     const SizedBox(height: 24),
 
-                    // Campo de monto si es efectivo
+// Campo de monto si es efectivo
                     if (_metodoPagoSeleccionado == MetodoPago.EFECTIVO)
                       _buildCashPayment(),
 
-                    // QR si es pago por QR
+// QR si es pago por QR
                     if (_metodoPagoSeleccionado == MetodoPago.QR)
                       _buildQRPayment(),
 
-                    // Tarjeta
+// Tarjeta
                     if (_metodoPagoSeleccionado == MetodoPago.TARJETA)
                       _buildCardPayment(),
                   ],
@@ -125,8 +225,6 @@ class _CobroScreenState extends State<CobroScreen> {
               ),
             ),
           ),
-
-          // Panel derecho - Resumen
           if (isDesktop)
             Container(
               width: 380,
@@ -140,6 +238,117 @@ class _CobroScreenState extends State<CobroScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildServiceType() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tipo de Servicio',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white.withOpacity(0.9),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _ServiceTypeCard(
+                icon: Icons.restaurant,
+                title: 'Mesa',
+                isSelected: _tipoServicioSeleccionado == TipoServicio.MESA,
+                onTap: () {
+                  setState(() {
+                    _tipoServicioSeleccionado = TipoServicio.MESA;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _ServiceTypeCard(
+                icon: Icons.shopping_bag,
+                title: 'Para Llevar',
+                isSelected: _tipoServicioSeleccionado == TipoServicio.LLEVAR,
+                onTap: () {
+                  setState(() {
+                    _tipoServicioSeleccionado = TipoServicio.LLEVAR;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _ServiceTypeCard(
+                icon: Icons.delivery_dining,
+                title: 'Delivery',
+                isSelected: _tipoServicioSeleccionado == TipoServicio.DELIVERY,
+                onTap: () {
+                  setState(() {
+                    _tipoServicioSeleccionado = TipoServicio.DELIVERY;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTableNumber() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Número de Mesa',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white.withOpacity(0.9),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _numeroMesaController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+                Icons.table_restaurant, color: AppColors.secondary),
+            hintText: 'Ej: 12',
+            hintStyle: TextStyle(
+              color: Colors.white.withOpacity(0.3),
+            ),
+            filled: true,
+            fillColor: const Color(0xFF1A1A1A),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                  color: AppColors.secondary, width: 2),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -224,8 +433,6 @@ class _CobroScreenState extends State<CobroScreen> {
           ),
         ),
         const SizedBox(height: 16),
-
-        // Campo de entrada
         TextField(
           controller: _montoRecibidoController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -238,7 +445,7 @@ class _CobroScreenState extends State<CobroScreen> {
             fontWeight: FontWeight.bold,
           ),
           decoration: InputDecoration(
-            prefixText: '\$ ',
+            prefixText: 'Bs. ',
             prefixStyle: const TextStyle(
               color: AppColors.secondary,
               fontSize: 32,
@@ -260,42 +467,24 @@ class _CobroScreenState extends State<CobroScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.secondary, width: 2),
+              borderSide: const BorderSide(
+                  color: AppColors.secondary, width: 2),
             ),
           ),
         ),
         const SizedBox(height: 16),
-
-        // Botones de monto rápido
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            _QuickAmountButton(
-              label: 'Exacto',
-              onTap: _setMontoExacto,
-            ),
-            _QuickAmountButton(
-              label: '+\$10',
-              onTap: () => _agregarMonto(10),
-            ),
-            _QuickAmountButton(
-              label: '+\$20',
-              onTap: () => _agregarMonto(20),
-            ),
-            _QuickAmountButton(
-              label: '+\$50',
-              onTap: () => _agregarMonto(50),
-            ),
-            _QuickAmountButton(
-              label: '+\$100',
-              onTap: () => _agregarMonto(100),
-            ),
+            _QuickAmountButton(label: 'Exacto', onTap: _setMontoExacto),
+            _QuickAmountButton(label: '+10', onTap: () => _agregarMonto(10)),
+            _QuickAmountButton(label: '+20', onTap: () => _agregarMonto(20)),
+            _QuickAmountButton(label: '+50', onTap: () => _agregarMonto(50)),
+            _QuickAmountButton(label: '+100', onTap: () => _agregarMonto(100)),
           ],
         ),
         const SizedBox(height: 24),
-
-        // Vuelto
         if (_montoRecibido > 0)
           Container(
             padding: const EdgeInsets.all(20),
@@ -333,11 +522,12 @@ class _CobroScreenState extends State<CobroScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${_vuelto.abs().toStringAsFixed(2)}',
+                      'Bs. ${_vuelto.abs().toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: _vuelto >= 0 ? AppColors.success : AppColors.error,
+                        color: _vuelto >= 0 ? AppColors.success : AppColors
+                            .error,
                       ),
                     ),
                   ],
@@ -393,7 +583,7 @@ class _CobroScreenState extends State<CobroScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Total: \$${_total.toStringAsFixed(2)}',
+                'Total: Bs. ${_total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -456,7 +646,7 @@ class _CobroScreenState extends State<CobroScreen> {
               ),
               const SizedBox(height: 32),
               Text(
-                'Total: \$${_total.toStringAsFixed(2)}',
+                'Total: Bs. ${_total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -473,7 +663,6 @@ class _CobroScreenState extends State<CobroScreen> {
   Widget _buildSummary() {
     return Column(
       children: [
-        // Header
         Container(
           padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(
@@ -509,8 +698,6 @@ class _CobroScreenState extends State<CobroScreen> {
             ],
           ),
         ),
-
-        // Items
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -556,7 +743,7 @@ class _CobroScreenState extends State<CobroScreen> {
                             ),
                           ),
                           Text(
-                            item.categoria,
+                            '${item.tipoProducto} - ${item.presentacion}',
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.white.withOpacity(0.5),
@@ -566,7 +753,7 @@ class _CobroScreenState extends State<CobroScreen> {
                       ),
                     ),
                     Text(
-                      '\$${(item.precio * item.cantidad).toStringAsFixed(2)}',
+                      'Bs. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -579,8 +766,6 @@ class _CobroScreenState extends State<CobroScreen> {
             },
           ),
         ),
-
-        // Notas
         if (widget.notas.isNotEmpty)
           Container(
             margin: const EdgeInsets.all(16),
@@ -624,8 +809,6 @@ class _CobroScreenState extends State<CobroScreen> {
               ],
             ),
           ),
-
-        // Total y confirmar
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -654,7 +837,7 @@ class _CobroScreenState extends State<CobroScreen> {
                     ),
                   ),
                   Text(
-                    '\$${_total.toStringAsFixed(2)}',
+                    'Bs. ${_total.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -713,7 +896,61 @@ class _CobroScreenState extends State<CobroScreen> {
   @override
   void dispose() {
     _montoRecibidoController.dispose();
+    _numeroMesaController.dispose();
     super.dispose();
+  }
+}
+
+// Service Type Card
+class _ServiceTypeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ServiceTypeCard({
+    required this.icon,
+    required this.title,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      decoration: BoxDecoration(
+        color: isSelected ? AppColors.secondary : const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSelected ? AppColors.secondary : const Color(0xFF2A2A2A),
+          width: 2,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 36, color: Colors.white),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -754,11 +991,7 @@ class _PaymentMethodCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 48,
-                color: Colors.white,
-              ),
+              Icon(icon, size: 48, color: Colors.white),
               const SizedBox(height: 12),
               Text(
                 title,
@@ -811,14 +1044,20 @@ class _QuickAmountButton extends StatelessWidget {
 
 // Success Dialog
 class _SuccessDialog extends StatelessWidget {
+  final int pedidoId;
   final double total;
   final MetodoPago metodoPago;
   final double vuelto;
+  final TipoServicio tipoServicio;
+  final String numeroMesa;
 
   const _SuccessDialog({
+    required this.pedidoId,
     required this.total,
     required this.metodoPago,
     required this.vuelto,
+    required this.tipoServicio,
+    required this.numeroMesa,
   });
 
   String get _metodoPagoTexto {
@@ -829,6 +1068,17 @@ class _SuccessDialog extends StatelessWidget {
         return 'QR';
       case MetodoPago.TARJETA:
         return 'Tarjeta';
+    }
+  }
+
+  String get _tipoServicioTexto {
+    switch (tipoServicio) {
+      case TipoServicio.MESA:
+        return 'Mesa $numeroMesa';
+      case TipoServicio.LLEVAR:
+        return 'Para Llevar';
+      case TipoServicio.DELIVERY:
+        return 'Delivery';
     }
   }
 
@@ -867,7 +1117,7 @@ class _SuccessDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Pedido enviado a cocina',
+              'Pedido #$pedidoId enviado a cocina',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.white.withOpacity(0.6),
@@ -887,6 +1137,27 @@ class _SuccessDialog extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
+                        'Servicio:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.6),
+                        ),
+                      ),
+                      Text(
+                        _tipoServicioTexto,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
                         'Total:',
                         style: TextStyle(
                           fontSize: 14,
@@ -894,7 +1165,7 @@ class _SuccessDialog extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$${total.toStringAsFixed(2)}',
+                        'Bs. ${total.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -937,7 +1208,7 @@ class _SuccessDialog extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '\$${vuelto.toStringAsFixed(2)}',
+                          'Bs. ${vuelto.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

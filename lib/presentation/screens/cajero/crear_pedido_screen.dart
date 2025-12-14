@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/item_pedido.dart';
 import '../../../data/repositories/producto_repository.dart';
 import '../../../data/models/producto_model.dart';
 import '../../layouts/cajero_layout.dart';
+import '../../widgets/cajero/selector_sabores_dialog.dart';
 import 'cobro_screen.dart';
 
 class CrearPedidoScreen extends StatefulWidget {
@@ -72,27 +74,94 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
     return _items.fold(0.0, (sum, item) => sum + (item.precio * item.cantidad));
   }
 
-  void _agregarItem(ProductoDto producto, String categoria) {
-    setState(() {
-      // Crear un identificador único combinando id y presentacionId
-      final uniqueId = '${producto.id}_${producto.presentacionId}';
-      final index = _items.indexWhere((item) => item.uniqueId == uniqueId);
+  void _agregarItem(ProductoDto producto, String categoria) async {
+    // Si es pizza, abrir selector de sabores
+    if (producto.tipoProducto == 'PIZZA') {
+      // Obtener todos los sabores de la categoría seleccionada
+      final sabores = _productos[_categoriaSeleccionada] ?? [];
 
-      if (index >= 0) {
-        _items[index].cantidad++;
-      } else {
-        _items.add(ItemPedido(
-          id: producto.id,
-          presentacionId: producto.presentacionId,
-          uniqueId: uniqueId,
-          nombre: producto.nombre,
-          precio: producto.precio,
-          cantidad: 1,
-          categoria: categoria,
-          presentacion: producto.presentacion,
-        ));
+      if (sabores.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay sabores disponibles'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
       }
-    });
+
+      // Mostrar diálogo de selección de sabores
+      await showDialog(
+        context: context,
+        builder: (context) => SelectorSaboresDialog(
+          saboresDisponibles: sabores,
+          presentacion: _categoriaSeleccionada!,
+          onConfirmar: (saboresSeleccionados) {
+            // Agregar la pizza con los sabores seleccionados
+            final saboresIds = saboresSeleccionados.map((s) => s.id).toList();
+
+            // Calcular el precio PROMEDIANDO los sabores seleccionados
+            final precioTotal = saboresSeleccionados.fold<double>(
+              0.0,
+                  (sum, sabor) => sum + sabor.precio,
+            );
+            final precioPromedio = precioTotal / saboresSeleccionados.length;
+
+            // Crear nombre descriptivo con todos los sabores
+            String nombrePizza = saboresSeleccionados
+                .map((s) => s.nombre)
+                .join(' + ');
+
+            setState(() {
+              // Crear identificador único con los sabores ordenados
+              final uniqueId = '${producto.presentacionId}_${saboresIds.join('_')}';
+              final index = _items.indexWhere((item) => item.uniqueId == uniqueId);
+
+              if (index >= 0) {
+                _items[index].cantidad++;
+              } else {
+                _items.add(ItemPedido(
+                  id: saboresSeleccionados.first.id,
+                  presentacionId: producto.presentacionId,
+                  uniqueId: uniqueId,
+                  nombre: nombrePizza,
+                  precio: precioPromedio, // Precio promediado
+                  cantidad: 1,
+                  categoria: categoria,
+                  presentacion: producto.presentacion,
+                  tipoProducto: producto.tipoProducto,
+                  saborId: saboresSeleccionados.first.id,
+                  saboresIds: saboresIds,
+                ));
+              }
+            });
+          },
+        ),
+      );
+    } else {
+      // Para bebidas, agregar directamente
+      setState(() {
+        final uniqueId = '${producto.id}_${producto.presentacionId}';
+        final index = _items.indexWhere((item) => item.uniqueId == uniqueId);
+
+        if (index >= 0) {
+          _items[index].cantidad++;
+        } else {
+          _items.add(ItemPedido(
+            id: producto.id,
+            presentacionId: producto.presentacionId,
+            uniqueId: uniqueId,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            cantidad: 1,
+            categoria: categoria,
+            presentacion: producto.presentacion,
+            tipoProducto: producto.tipoProducto,
+            saborId: producto.id,
+          ));
+        }
+      });
+    }
   }
 
   void _actualizarCantidad(int index, int delta) {
@@ -210,17 +279,13 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
       currentRoute: '/cajero/crear-pedido',
       child: Row(
         children: [
-          // Panel principal - Selección de productos
           Expanded(
             flex: 2,
             child: Container(
               color: const Color(0xFF0A0A0A),
               child: Column(
                 children: [
-                  // Selector de categorías
                   _buildCategorySelector(),
-
-                  // Lista de productos
                   Expanded(
                     child: _categoriaSeleccionada == null
                         ? _buildEmptyState()
@@ -230,8 +295,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
               ),
             ),
           ),
-
-          // Panel lateral - Carrito
           if (isDesktop)
             Container(
               width: 380,
@@ -382,7 +445,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Pizzas
           Text(
             'Pizzas - $_categoriaSeleccionada',
             style: TextStyle(
@@ -429,6 +491,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                   cantidad: 0,
                   categoria: '',
                   presentacion: '',
+                  tipoProducto: '',
                 ),
               )
                   .cantidad;
@@ -443,8 +506,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             },
           ),
           const SizedBox(height: 32),
-
-          // Bebidas
           if (_bebidas.isNotEmpty) ...[
             Text(
               'Bebidas',
@@ -480,6 +541,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
                     cantidad: 0,
                     categoria: '',
                     presentacion: '',
+                    tipoProducto: '',
                   ),
                 )
                     .cantidad;
@@ -503,7 +565,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
   Widget _buildCart() {
     return Column(
       children: [
-        // Header del carrito
         Container(
           padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(
@@ -561,8 +622,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             ],
           ),
         ),
-
-        // Lista de items
         Expanded(
           child: _items.isEmpty
               ? Center(
@@ -600,8 +659,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             },
           ),
         ),
-
-        // Notas para cocina
         Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
@@ -635,8 +692,6 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
             ),
           ),
         ),
-
-        // Total y botón de cobrar
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -717,7 +772,7 @@ class _CrearPedidoScreenState extends State<CrearPedidoScreen> {
   }
 }
 
-// Category Card Widget
+// Widgets auxiliares (sin cambios)
 class _CategoryCard extends StatelessWidget {
   final String emoji;
   final String title;
@@ -756,10 +811,7 @@ class _CategoryCard extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 40),
-                ),
+                Text(emoji, style: const TextStyle(fontSize: 40)),
                 const SizedBox(height: 12),
                 Text(
                   title,
@@ -786,7 +838,6 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
-// Product Card Widget
 class _ProductCard extends StatelessWidget {
   final String nombre;
   final double precio;
@@ -908,7 +959,6 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-// Cart Item Widget
 class _CartItem extends StatelessWidget {
   final ItemPedido item;
   final VoidCallback onIncrease;
@@ -950,7 +1000,7 @@ class _CartItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${item.categoria} - ${item.presentacion}',
+                      '${item.tipoProducto} - ${item.presentacion}',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withOpacity(0.5),
@@ -1004,7 +1054,7 @@ class _CartItem extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                'Bs.${(item.precio * item.cantidad).toStringAsFixed(2)}',
+                'Bs. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1016,36 +1066,5 @@ class _CartItem extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-// Modelo de Item de Pedido
-class ItemPedido {
-  final int id;
-  final int presentacionId;
-  final String uniqueId;
-  final String nombre;
-  final double precio;
-  int cantidad;
-  final String categoria;
-  final String presentacion;
-
-  ItemPedido({
-    required this.id,
-    required this.presentacionId,
-    required this.uniqueId,
-    required this.nombre,
-    required this.precio,
-    required this.cantidad,
-    required this.categoria,
-    required this.presentacion,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'presentacionId': presentacionId,
-      'cantidad': cantidad,
-    };
   }
 }

@@ -8,6 +8,7 @@ class Pedido {
   final String? usuarioNombre;
   final EstadoPedido estado;
   final TipoServicio tipoServicio;
+  final MetodoPago metodoPago;
   final DateTime fechaHora;
   final double total;
   final List<DetallePedido> detalles;
@@ -21,6 +22,7 @@ class Pedido {
     required this.fechaHora,
     required this.total,
     this.detalles = const [],
+    required this.metodoPago,
   });
 
   factory Pedido.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class Pedido {
       estado: _parseEstado(json['estado']),
       tipoServicio: _parseTipoServicio(json['tipoServicio']),
       fechaHora: DateTime.parse(json['fechaHora'] ?? DateTime.now().toIso8601String()),
+      metodoPago: _parseMetodoPago(json['metodoPago']),
       total: (json['total'] ?? 0).toDouble(),
       detalles: (json['items'] as List?)
           ?.map((e) => DetallePedido.fromJson(e))
@@ -43,6 +46,7 @@ class Pedido {
     'usuarioId': usuarioId,
     'estado': estado.name,
     'tipoServicio': tipoServicio.name,
+    'metodoPago': metodoPago.name,
     'fechaHora': fechaHora.toIso8601String(),
     'total': total,
     'detalles': detalles.map((e) => e.toJson()).toList(),
@@ -63,6 +67,15 @@ class Pedido {
     return TipoServicio.values.firstWhere(
           (e) => e.name == str,
       orElse: () => TipoServicio.MESA,
+    );
+  }
+
+  static MetodoPago _parseMetodoPago(dynamic value) {
+    if (value == null) return MetodoPago.EFECTIVO;
+    final str = value.toString().toUpperCase();
+    return MetodoPago.values.firstWhere(
+          (e) => e.name == str,
+      orElse: () => MetodoPago.EFECTIVO,
     );
   }
 
@@ -98,18 +111,45 @@ class CreatePedidoRequest {
   final int usuarioId;
   final TipoServicio tipoServicio;
   final List<PizzaPedidoItem> pizzas;
+  final String metodoPago;
+  final List<DetallePedidoRequest> detalles;
 
   CreatePedidoRequest({
     required this.usuarioId,
     required this.tipoServicio,
-    required this.pizzas,
+    required this.pizzas, required this.metodoPago, required this.detalles,
   });
 
   Map<String, dynamic> toJson() => {
     'usuarioId': usuarioId,
     'tipoServicio': tipoServicio.name,
     'pizzas': pizzas.map((e) => e.toJson()).toList(),
+    'metodoPago': metodoPago,
+    'detalles': detalles.map((e) => e.toJson()).toList(),
   };
+}
+
+class DetallePedidoRequest {
+  final int productoId;
+  final int presentacionId;
+  final int saborId;
+  final int cantidad;
+
+  DetallePedidoRequest({
+    required this.productoId,
+    required this.presentacionId,
+    required this.saborId,
+    required this.cantidad,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'productoId': productoId,
+      'presentacionId': presentacionId,
+      'saborId': saborId,
+      'cantidad': cantidad,
+    };
+  }
 }
 
 class PizzaPedidoItem {

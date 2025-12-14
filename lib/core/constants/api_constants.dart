@@ -83,6 +83,7 @@ class ApiConstants {
 
 
   // ========== PEDIDOS - COCINA ENDPOINTS ==========
+  static const String realizarPedido= '$apiVersion/cajero/pedidos';
   static const String pedidosPendientes = '$apiVersion/cajero/pedidos/estado/PENDIENTE';
   static const String pedidosEnPreparacion = '$apiVersion/cajero/pedidos/estado/EN_PREPARACION';
   static String tomarPedido(int id) => '$apiVersion/cocina/pedidos/$id/tomar';
@@ -137,3 +138,5 @@ enum TipoServicio {
   LLEVAR,
   DELIVERY
 }
+
+enum MetodoPago { EFECTIVO, QR, TARJETA }
