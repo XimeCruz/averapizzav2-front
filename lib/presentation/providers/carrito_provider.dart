@@ -1,21 +1,20 @@
 // lib/presentation/providers/carrito_provider.dart
 
+import 'package:avp_frontend/core/constants/api_constants.dart';
 import 'package:flutter/foundation.dart';
-
-// Import necesario para Icons
 import 'package:flutter/material.dart';
+import '../../data/models/item_carrito_model.dart';
 
-/// Provider para gestionar el carrito de compras del cliente
 class CarritoProvider extends ChangeNotifier {
   final List<ItemCarrito> _items = [];
   String _notasEspeciales = '';
-  TipoEntrega _tipoEntrega = TipoEntrega.LOCAL;
+  TipoServicio _tipoEntrega = TipoServicio.MESA;
   String? _direccionEntrega;
 
   // Getters
   List<ItemCarrito> get items => List.unmodifiable(_items);
   String get notasEspeciales => _notasEspeciales;
-  TipoEntrega get tipoEntrega => _tipoEntrega;
+  TipoServicio get tipoEntrega => _tipoEntrega;
   String? get direccionEntrega => _direccionEntrega;
 
   /// Cantidad total de items en el carrito
@@ -33,7 +32,7 @@ class CarritoProvider extends ChangeNotifier {
 
   /// Costo de delivery
   double get costoDelivery {
-    if (_tipoEntrega == TipoEntrega.DELIVERY) {
+    if (_tipoEntrega == TipoServicio.DELIVERY) {
       // Envío gratis en compras mayores a $50
       return subtotal >= 50.0 ? 0.0 : 5.0;
     }
@@ -141,9 +140,9 @@ class CarritoProvider extends ChangeNotifier {
   }
 
   /// Establecer tipo de entrega
-  void setTipoEntrega(TipoEntrega tipo) {
+  void setTipoEntrega(TipoServicio tipo) {
     _tipoEntrega = tipo;
-    if (tipo == TipoEntrega.LOCAL) {
+    if (tipo == TipoServicio.MESA) {
       _direccionEntrega = null;
     }
     notifyListeners();
@@ -186,126 +185,8 @@ class CarritoProvider extends ChangeNotifier {
   /// Limpiar carrito después de un pedido exitoso
   void limpiarDespuesDePedido() {
     vaciarCarrito();
-    _tipoEntrega = TipoEntrega.LOCAL;
+    _tipoEntrega = TipoServicio.MESA;
   }
 }
 
-/// Modelo de item del carrito
-class ItemCarrito {
-  final int productoId;
-  final String nombre;
-  final double precio;
-  int cantidad;
-  final String categoria;
-  final String? observaciones;
 
-  ItemCarrito({
-    required this.productoId,
-    required this.nombre,
-    required this.precio,
-    required this.cantidad,
-    required this.categoria,
-    this.observaciones,
-  });
-
-  /// Subtotal del item (precio * cantidad)
-  double get subtotal => precio * cantidad;
-
-  /// Convertir a JSON para enviar al backend
-  Map<String, dynamic> toJson() {
-    return {
-      'productoId': productoId,
-      'nombre': nombre,
-      'precio': precio,
-      'cantidad': cantidad,
-      'categoria': categoria,
-      'observaciones': observaciones,
-      'subtotal': subtotal,
-    };
-  }
-
-  /// Crear desde JSON
-  factory ItemCarrito.fromJson(Map<String, dynamic> json) {
-    return ItemCarrito(
-      productoId: json['productoId'] as int,
-      nombre: json['nombre'] as String,
-      precio: (json['precio'] as num).toDouble(),
-      cantidad: json['cantidad'] as int,
-      categoria: json['categoria'] as String,
-      observaciones: json['observaciones'] as String?,
-    );
-  }
-
-  /// Copiar con modificaciones
-  ItemCarrito copyWith({
-    int? productoId,
-    String? nombre,
-    double? precio,
-    int? cantidad,
-    String? categoria,
-    String? observaciones,
-  }) {
-    return ItemCarrito(
-      productoId: productoId ?? this.productoId,
-      nombre: nombre ?? this.nombre,
-      precio: precio ?? this.precio,
-      cantidad: cantidad ?? this.cantidad,
-      categoria: categoria ?? this.categoria,
-      observaciones: observaciones ?? this.observaciones,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'ItemCarrito(productoId: $productoId, nombre: $nombre, precio: $precio, cantidad: $cantidad, categoria: $categoria, observaciones: $observaciones)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is ItemCarrito &&
-        other.productoId == productoId &&
-        other.nombre == nombre &&
-        other.precio == precio &&
-        other.cantidad == cantidad &&
-        other.categoria == categoria &&
-        other.observaciones == observaciones;
-  }
-
-  @override
-  int get hashCode {
-    return productoId.hashCode ^
-    nombre.hashCode ^
-    precio.hashCode ^
-    cantidad.hashCode ^
-    categoria.hashCode ^
-    (observaciones?.hashCode ?? 0);
-  }
-}
-
-/// Enum para tipo de entrega
-enum TipoEntrega {
-  LOCAL,
-  DELIVERY,
-}
-
-extension TipoEntregaExtension on TipoEntrega {
-  String get texto {
-    switch (this) {
-      case TipoEntrega.LOCAL:
-        return 'Recoger en Local';
-      case TipoEntrega.DELIVERY:
-        return 'Delivery';
-    }
-  }
-
-  IconData get icono {
-    switch (this) {
-      case TipoEntrega.LOCAL:
-        return Icons.store;
-      case TipoEntrega.DELIVERY:
-        return Icons.delivery_dining;
-    }
-  }
-}

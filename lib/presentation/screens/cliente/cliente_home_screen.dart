@@ -84,8 +84,8 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildGreeting(authProvider),
-                    const SizedBox(height: 24),
-                    _buildSearchBar(),
+                    // const SizedBox(height: 24),
+                    // _buildSearchBar(),
                   ],
                 ),
               ),
@@ -175,7 +175,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
                   end: Alignment.bottomRight,
                 ),
                 title: 'Envío Gratis',
-                subtitle: 'En compras mayores a \$50',
+                subtitle: 'En compras mayores a Bs. 200',
                 emoji: '🚚',
               ),
               _BannerItem(
@@ -254,25 +254,25 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
-      child: TextField(
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Buscar pizzas, bebidas...',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-          prefixIcon: const Icon(Icons.search, color: Colors.white60),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-      ),
-    );
-  }
+  // Widget _buildSearchBar() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF1A1A1A),
+  //       borderRadius: BorderRadius.circular(16),
+  //       border: Border.all(color: const Color(0xFF2A2A2A)),
+  //     ),
+  //     child: TextField(
+  //       style: const TextStyle(color: Colors.white),
+  //       decoration: InputDecoration(
+  //         hintText: 'Buscar pizzas, bebidas...',
+  //         hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+  //         prefixIcon: const Icon(Icons.search, color: Colors.white60),
+  //         border: InputBorder.none,
+  //         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildSectionTitle(String title) {
     return Row(
@@ -307,46 +307,60 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
       crossAxisSpacing: 16,
       childAspectRatio: isDesktop ? 1.2 : 2.5,
       children: [
-        _CategoryCard(
-          title: 'Pizza por Peso',
-          subtitle: 'Ideal para compartir',
-          emoji: '⚖️',
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFF6B35), Color(0xFFF7931E)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const PedidoScreen(),
-              ),
-            );
-          },
-        ),
-        _CategoryCard(
-          title: 'Pizza Redonda',
-          subtitle: 'Clásica y deliciosa',
-          emoji: '🍕',
-          gradient: const LinearGradient(
-            colors: [Color(0xFFE63946), Color(0xFFD62828)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          onTap: () {},
-        ),
-        _CategoryCard(
-          title: 'Pizza en Bandeja',
-          subtitle: 'Para toda la familia',
-          emoji: '📦',
-          gradient: const LinearGradient(
-            colors: [Color(0xFFF77F00), Color(0xFFD62828)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          onTap: () {},
-        ),
+        // _CategoryCard(
+        //   title: 'Pizza por Peso',
+        //   subtitle: 'Ideal para compartir',
+        //   emoji: '⚖️',
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFFFF6B35), Color(0xFFF7931E)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (_) => const PedidoScreen(),
+        //       ),
+        //     );
+        //   },
+        // ),
+        // _CategoryCard(
+        //   title: 'Pizza Redonda',
+        //   subtitle: 'Clásica y deliciosa',
+        //   emoji: '🍕',
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFFE63946), Color(0xFFD62828)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (_) => const PedidoScreen(),
+        //       ),
+        //     );
+        //   },
+        // ),
+        // _CategoryCard(
+        //   title: 'Pizza en Bandeja',
+        //   subtitle: 'Para toda la familia',
+        //   emoji: '📦',
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFFF77F00), Color(0xFFD62828)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (_) => const PedidoScreen(),
+        //       ),
+        //     );
+        //   },
+        // ),
       ],
     );
   }
@@ -432,14 +446,14 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
         _PromoCard(
           title: 'Combo Familiar',
           description: '2 Pizzas grandes + 2 Bebidas 1.5L',
-          price: '\$45.00',
+          price: 'Bs. 178.00',
           discount: '15% OFF',
           color: const Color(0xFF06D6A0),
         ),
         _PromoCard(
           title: 'Duo Perfecto',
           description: '1 Pizza mediana + 2 Bebidas 500ml',
-          price: '\$28.00',
+          price: 'Bs. 60.00',
           discount: '10% OFF',
           color: const Color(0xFFEF476F),
         ),

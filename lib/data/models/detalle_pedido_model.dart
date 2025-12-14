@@ -50,7 +50,6 @@ class DetallePedido {
       sabor3Id: json['sabor3Id'],
       pesoKg: json['pesoKg'] != null ? (json['pesoKg'] as num).toDouble() : null,
 
-      // Nombres - maneja tanto el formato con 'Nombre' como sin él
       productoNombre: json['productoNombre'] ?? json['producto']?['nombre'],
       presentacionNombre: json['presentacionNombre'] ?? json['presentacion'],
       sabor1Nombre: json['sabor1'],
@@ -92,26 +91,4 @@ class DetallePedido {
     return sabores.join(' + ');
   }
 
-  // String getDescripcion() {
-  //   final descripcion = StringBuffer();
-  //
-  //   if (productoNombre != null) {
-  //     descripcion.write(productoNombre);
-  //   }
-  //
-  //   if (presentacionNombre != null) {
-  //     descripcion.write(' - $presentacionNombre');
-  //   }
-  //
-  //   if (pesoKg != null) {
-  //     descripcion.write(' (${pesoKg!.toStringAsFixed(2)}kg)');
-  //   }
-  //
-  //   final saboresText = getSaboresText();
-  //   if (saboresText.isNotEmpty) {
-  //     descripcion.write('\n$saboresText');
-  //   }
-  //
-  //   return descripcion.toString();
-  // }
 }

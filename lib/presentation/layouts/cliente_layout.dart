@@ -100,21 +100,21 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                 final itemCount = carritoProvider.cantidadItems;
                 return Stack(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.shopping_cart,
-                        color: Colors.white70,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CarritoScreen(),
-                          ),
-                        );
-                      },
-                      tooltip: 'Carrito',
-                    ),
+                    // IconButton(
+                    //   icon: const Icon(
+                    //     Icons.shopping_cart,
+                    //     color: Colors.white70,
+                    //   ),
+                    //   onPressed: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //         builder: (_) => const CarritoScreen(),
+                    //       ),
+                    //     );
+                    //   },
+                    //   tooltip: 'Carrito',
+                    // ),
                     if (itemCount > 0)
                       Positioned(
                         right: 8,
@@ -310,26 +310,26 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                     ),
                   ),
 
-                Consumer<CarritoProvider>(
-                  builder: (context, carritoProvider, _) {
-                    return _SidebarItem(
-                      icon: Icons.shopping_cart,
-                      title: 'Carrito',
-                      isActive: widget.currentRoute == '/cliente/carrito',
-                      isExpanded: uiProvider.isSidebarExpanded,
-                      badge: carritoProvider.cantidadItems,
-                      badgeColor: AppColors.secondary,
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CarritoScreen(),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                // Consumer<CarritoProvider>(
+                //   builder: (context, carritoProvider, _) {
+                //     return _SidebarItem(
+                //       icon: Icons.shopping_cart,
+                //       title: 'Carrito',
+                //       isActive: widget.currentRoute == '/cliente/carrito',
+                //       isExpanded: uiProvider.isSidebarExpanded,
+                //       badge: carritoProvider.cantidadItems,
+                //       badgeColor: AppColors.secondary,
+                //       onTap: () {
+                //         Navigator.pushReplacement(
+                //           context,
+                //           MaterialPageRoute(
+                //             builder: (_) => const CarritoScreen(),
+                //           ),
+                //         );
+                //       },
+                //     );
+                //   },
+                // ),
                 _SidebarItem(
                   icon: Icons.receipt_long,
                   title: 'Mis Pedidos',
@@ -613,25 +613,25 @@ class _ClienteLayoutState extends State<ClienteLayout> {
                 //   },
                 // ),
                 const Divider(color: Color(0xFF2A2A2A)),
-                Consumer<CarritoProvider>(
-                  builder: (context, carritoProvider, _) {
-                    return _DrawerItem(
-                      icon: Icons.shopping_cart,
-                      title: 'Carrito',
-                      badge: carritoProvider.cantidadItems,
-                      isActive: widget.currentRoute == '/cliente/carrito',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CarritoScreen(),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                // Consumer<CarritoProvider>(
+                //   builder: (context, carritoProvider, _) {
+                //     return _DrawerItem(
+                //       icon: Icons.shopping_cart,
+                //       title: 'Carrito',
+                //       badge: carritoProvider.cantidadItems,
+                //       isActive: widget.currentRoute == '/cliente/carrito',
+                //       onTap: () {
+                //         Navigator.pop(context);
+                //         Navigator.pushReplacement(
+                //           context,
+                //           MaterialPageRoute(
+                //             builder: (_) => const CarritoScreen(),
+                //           ),
+                //         );
+                //       },
+                //     );
+                //   },
+                // ),
                 _DrawerItem(
                   icon: Icons.receipt_long,
                   title: 'Mis Pedidos',
