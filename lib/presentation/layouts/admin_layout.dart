@@ -274,7 +274,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const PedidosListScreen(),
+                        builder: (_) => const AdminPedidosListScreen(),
                       ),
                     );
                   },
@@ -548,7 +548,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const PedidosListScreen(),
+                          builder: (_) => const AdminPedidosListScreen(),
                         ),
                       );
                     }

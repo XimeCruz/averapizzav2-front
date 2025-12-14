@@ -57,7 +57,7 @@ class PedidoRepository {
 
   Future<void> entregarPedido(int id) async {
     try {
-      await _apiClient.put(ApiConstants.entregarPedido(id));
+      await _apiClient.post(ApiConstants.entregarPedido(id));
     } catch (e) {
       throw Exception('Error al entregar pedido: ${e.toString()}');
     }
@@ -96,7 +96,7 @@ class PedidoRepository {
 
   Future<Pedido> tomarPedido(int id) async {
     try {
-      final response = await _apiClient.put(ApiConstants.tomarPedido(id));
+      final response = await _apiClient.post(ApiConstants.tomarPedido(id));
       return Pedido.fromJson(response.data);
     } catch (e) {
       throw Exception('Error al tomar pedido: ${e.toString()}');
@@ -105,7 +105,7 @@ class PedidoRepository {
 
   Future<Pedido> marcarListo(int id) async {
     try {
-      final response = await _apiClient.put(ApiConstants.marcarListo(id));
+      final response = await _apiClient.post(ApiConstants.marcarListo(id));
       return Pedido.fromJson(response.data);
     } catch (e) {
       throw Exception('Error al marcar pedido como listo: ${e.toString()}');

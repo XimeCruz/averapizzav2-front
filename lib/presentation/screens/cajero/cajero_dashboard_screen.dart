@@ -1,5 +1,6 @@
 // lib/presentation/screens/cajero/cajero_dashboard_screen.dart
 
+import 'package:avp_frontend/presentation/screens/cajero/pedidos_listos_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/api_constants.dart';
@@ -204,14 +205,14 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => const PedidosListScreen(
-                          //       estado: EstadoPedido.PENDIENTE,
-                          //     ),
-                          //   ),
-                          // );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PedidosListScreen(
+                                estado: EstadoPedido.PENDIENTE,
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -231,14 +232,14 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => const PedidosListScreen(
-                          //       estado: EstadoPedido.EN_PREPARACION,
-                          //     ),
-                          //   ),
-                          // );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PedidosListScreen(
+                                estado: EstadoPedido.EN_PREPARACION,
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -258,14 +259,14 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => const PedidosListScreen(
-                          //       estado: EstadoPedido.LISTO,
-                          //     ),
-                          //   ),
-                          // );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PedidosListScreen(
+                                estado: EstadoPedido.LISTO,
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -285,12 +286,12 @@ class _CajeroDashboardScreenState extends State<CajeroDashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         onTap: () {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => const PedidosListScreen(),
-                          //   ),
-                          // );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PedidosListScreen(),
+                            ),
+                          );
                         },
                       ),
                     ),

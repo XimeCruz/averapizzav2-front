@@ -11,7 +11,6 @@ import '../screens/cajero/cajero_dashboard_screen.dart';
 import '../screens/cajero/crear_pedido_screen.dart';
 import '../screens/cajero/historial_pedidos_screen.dart';
 import '../screens/cajero/pedidos_en_cocina_screen.dart';
-import '../screens/admin/pedidos/pedidos_list_screen.dart';
 import '../screens/cajero/pedidos_listos_screen.dart';
 import '../screens/cajero/pedidos_pendientes_screen.dart';
 import '../providers/ui_provider.dart';
@@ -283,7 +282,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PedidosListosScreen(),
+                                builder: (_) => const PedidosListScreen(),
                               ),
                             );
                           },

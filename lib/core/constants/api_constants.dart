@@ -78,16 +78,17 @@ class ApiConstants {
   static const String pedidosCajero = '$apiVersion/cajero/pedidos/hoy';
   static String pedidosByEstado(String estado) =>
       '$apiVersion/cajero/pedidos/estado/$estado';
-  static String entregarPedido(int id) =>
-      '$apiVersion/cajero/pedidos/$id/entregar';
-  static String cancelarPedido(int id) =>
-      '$apiVersion/cajero/pedidos/$id/cancelar';
+
+
 
   // ========== PEDIDOS - COCINA ENDPOINTS ==========
   static const String pedidosPendientes = '$apiVersion/cajero/pedidos/estado/PENDIENTE';
   static const String pedidosEnPreparacion = '$apiVersion/cajero/pedidos/estado/EN_PREPARACION';
   static String tomarPedido(int id) => '$apiVersion/cocina/pedidos/$id/tomar';
   static String marcarListo(int id) => '$apiVersion/cocina/pedidos/$id/marcar-listo';
+  static String entregarPedido(int id) => '$apiVersion/cocina/pedidos/$id/entregar';
+  static String cancelarPedido(int id) =>
+      '$apiVersion/cajero/pedidos/$id/cancelar';
 
   // ========== REPORTES ENDPOINTS ==========
   static const String reporteDiario = '$apiVersion/admin/reportes/diario';

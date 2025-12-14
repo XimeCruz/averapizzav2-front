@@ -29,11 +29,11 @@ class _PedidosPendientesScreenState extends State<PedidosPendientesScreen> {
 
   Future<void> _loadData() async {
     try {
-      print('🔄 Cargando pedidos PENDIENTES...');
+      print('Cargando pedidos PENDIENTES...');
       await context.read<PedidoProvider>().loadPedidosByEstado(EstadoPedido.PENDIENTE);
-      print('✅ Pedidos cargados');
+      print('Pedidos cargados');
     } catch (e) {
-      print('❌ Error cargando pedidos: $e');
+      print('Error cargando pedidos: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
