@@ -307,60 +307,60 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> {
       crossAxisSpacing: 16,
       childAspectRatio: isDesktop ? 1.2 : 2.5,
       children: [
-        _CategoryCard(
-          title: 'Pizza por Peso',
-          subtitle: 'Ideal para compartir',
-          emoji: '⚖️',
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFF6B35), Color(0xFFF7931E)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const PedidoScreen(),
-              ),
-            );
-          },
-        ),
-        _CategoryCard(
-          title: 'Pizza Redonda',
-          subtitle: 'Clásica y deliciosa',
-          emoji: '🍕',
-          gradient: const LinearGradient(
-            colors: [Color(0xFFE63946), Color(0xFFD62828)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const PedidoScreen(),
-              ),
-            );
-          },
-        ),
-        _CategoryCard(
-          title: 'Pizza en Bandeja',
-          subtitle: 'Para toda la familia',
-          emoji: '📦',
-          gradient: const LinearGradient(
-            colors: [Color(0xFFF77F00), Color(0xFFD62828)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const PedidoScreen(),
-              ),
-            );
-          },
-        ),
+        // _CategoryCard(
+        //   title: 'Pizza por Peso',
+        //   subtitle: 'Ideal para compartir',
+        //   emoji: '⚖️',
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFFFF6B35), Color(0xFFF7931E)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (_) => const PedidoScreen(),
+        //       ),
+        //     );
+        //   },
+        // ),
+        // _CategoryCard(
+        //   title: 'Pizza Redonda',
+        //   subtitle: 'Clásica y deliciosa',
+        //   emoji: '🍕',
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFFE63946), Color(0xFFD62828)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (_) => const PedidoScreen(),
+        //       ),
+        //     );
+        //   },
+        // ),
+        // _CategoryCard(
+        //   title: 'Pizza en Bandeja',
+        //   subtitle: 'Para toda la familia',
+        //   emoji: '📦',
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFFF77F00), Color(0xFFD62828)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (_) => const PedidoScreen(),
+        //       ),
+        //     );
+        //   },
+        // ),
       ],
     );
   }

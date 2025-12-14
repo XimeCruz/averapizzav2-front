@@ -430,7 +430,7 @@ class _PedidoActivoCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                            'Bs. ${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -780,9 +780,9 @@ class _PedidoDetalleDialog extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          _buildDetailRow('2x', 'Pizza Muzzarella', '\$36.00'),
+                          _buildDetailRow('2x', 'Pizza Muzzarella', 'Bs. 36.00'),
                           const SizedBox(height: 8),
-                          _buildDetailRow('1x', 'Coca Cola 1.5L', '\$5.00'),
+                          _buildDetailRow('1x', 'Coca Cola 1.5L', 'Bs. 5.00'),
                         ],
                       ),
                     ),
@@ -858,7 +858,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                            'Bs. ${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
