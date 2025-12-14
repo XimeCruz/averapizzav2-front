@@ -353,6 +353,13 @@ class _SaborRecetaCardState extends State<_SaborRecetaCard> {
 
   @override
   Widget build(BuildContext context) {
+
+    if(_isLoading){
+      return Padding(padding:   const EdgeInsets.only(bottom: 12),
+        child: LoadingWidget(message: 'Cargando receta de ${widget.sabor.nombre}...'),
+      );
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: const Color(0xFF1A1A1A),

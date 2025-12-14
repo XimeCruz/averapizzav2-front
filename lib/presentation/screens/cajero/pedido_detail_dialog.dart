@@ -53,10 +53,7 @@ class PedidoDetailDialog extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    estadoColor,
-                    estadoColor.withOpacity(0.8),
-                  ],
+                  colors: [estadoColor, estadoColor.withOpacity(0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -161,9 +158,7 @@ class PedidoDetailDialog extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.grey.withOpacity(0.2),
-                        ),
+                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
                       ),
                       child: Column(
                         children: [
@@ -177,7 +172,9 @@ class PedidoDetailDialog extends StatelessWidget {
                           _InfoRow(
                             icon: Icons.person_rounded,
                             label: 'Cliente',
-                            value: pedido.usuarioNombre ?? 'Usuario #${pedido.usuarioId}',
+                            value:
+                                pedido.usuarioNombre ??
+                                'Usuario #${pedido.usuarioId}',
                             color: AppColors.primary,
                           ),
                         ],
@@ -268,7 +265,9 @@ class PedidoDetailDialog extends StatelessWidget {
                                 '${pedido.detalles.length} ${pedido.detalles.length == 1 ? 'producto' : 'productos'}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary.withOpacity(0.7),
+                                  color: AppColors.textSecondary.withOpacity(
+                                    0.7,
+                                  ),
                                 ),
                               ),
                             ],
@@ -315,10 +314,7 @@ class PedidoDetailDialog extends StatelessWidget {
                 ),
                 child: const Text(
                   'Cerrar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -392,13 +388,16 @@ class _DetalleCard extends StatelessWidget {
     final List<String> sabores = [];
 
     // Recopilar todos los sabores no nulos y no vacíos
-    if (detalle.sabor1Nombre != null && detalle.sabor1Nombre.toString().trim().isNotEmpty) {
+    if (detalle.sabor1Nombre != null &&
+        detalle.sabor1Nombre.toString().trim().isNotEmpty) {
       sabores.add(detalle.sabor1Nombre.toString().trim());
     }
-    if (detalle.sabor2Nombre != null && detalle.sabor2Nombre.toString().trim().isNotEmpty) {
+    if (detalle.sabor2Nombre != null &&
+        detalle.sabor2Nombre.toString().trim().isNotEmpty) {
       sabores.add(detalle.sabor2Nombre.toString().trim());
     }
-    if (detalle.sabor3Nombre != null && detalle.sabor3Nombre.toString().trim().isNotEmpty) {
+    if (detalle.sabor3Nombre != null &&
+        detalle.sabor3Nombre.toString().trim().isNotEmpty) {
       sabores.add(detalle.sabor3Nombre.toString().trim());
     }
 
@@ -411,19 +410,12 @@ class _DetalleCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.orange.withOpacity(0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.orange.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.orange.withOpacity(0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.label_rounded,
-            size: 16,
-            color: Colors.orange.shade700,
-          ),
+          Icon(Icons.label_rounded, size: 16, color: Colors.orange.shade700),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -475,136 +467,126 @@ class _DetalleCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.2),
+Widget build(BuildContext context) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withOpacity(0.2),
-                        AppColors.primary.withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
+      ],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con icono y nombre
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.2),
+                      AppColors.primary.withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: const Icon(
-                    Icons.local_pizza_rounded,
-                    size: 24,
-                    color: AppColors.primary,
-                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              detalle.productoNombre ?? '',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (detalle.presentacionNombre != null) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                detalle.presentacionNombre,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(width: 4),
-                          // Icon(
-                          //   Icons.shopping_cart_rounded,
-                          //   size: 14,
-                          //   color: AppColors.textSecondary.withOpacity(0.7),
-                          // ),
-                          // const SizedBox(width: 4),
-
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      _buildSabores(detalle),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Cantidad: ${detalle.cantidad ?? 1}',
+                child: const Icon(
+                  Icons.local_pizza_rounded,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded( // ✅ Cambio clave aquí
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded( // ✅ En lugar de Flexible
+                          child: Text(
+                            detalle.productoNombre ?? '',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                        ),
+                        if (detalle.presentacionNombre != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              detalle.presentacionNombre,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
                         ],
-                      ),
-
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Bs. ${(detalle.subtotal ?? 0).toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12), // ✅ Espaciado
+          
+          // Sabores
+          _buildSabores(detalle),
+          
+          const SizedBox(height: 12), // ✅ Espaciado
+          
+          // Cantidad y Precio en la misma fila
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Cantidad: ${detalle.cantidad ?? 1}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Bs. ${(detalle.subtotal ?? 0).toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
