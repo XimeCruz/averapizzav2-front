@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/pedido_model.dart';
 import '../../layouts/cajero_layout.dart';
 import '../../providers/pedido_provider.dart';
 
@@ -19,17 +20,32 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
   String _searchQuery = '';
   EstadoPedido? _filtroEstado;
   DateTimeRange? _rangoFechas;
-  String _ordenarPor = 'reciente'; // reciente, antiguo, monto_mayor, monto_menor
+  String _ordenarPor = 'reciente';
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   Future<void> _loadData() async {
-    // Cargar todos los pedidos del historial
-    await context.read<PedidoProvider>().loadPedidos();
+    try {
+      print('🔄 Cargando historial de pedidos...');
+      await context.read<PedidoProvider>().loadPedidos();
+      print('✅ Historial cargado');
+    } catch (e) {
+      print('❌ Error cargando historial: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar historial: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _seleccionarRangoFechas() async {
@@ -70,14 +86,14 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
     });
   }
 
-  void _verDetalles(dynamic pedido) {
+  void _verDetalles(Pedido pedido) {
     showDialog(
       context: context,
       builder: (context) => _PedidoDetalleDialog(pedido: pedido),
     );
   }
 
-  void _reimprimirTicket(dynamic pedido) {
+  void _reimprimirTicket(Pedido pedido) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Reimprimiendo ticket del pedido #${pedido.id}'),
@@ -87,16 +103,14 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
     );
   }
 
-  void _mostrarEstadisticas() {
+  void _mostrarEstadisticas(List<Pedido> pedidos) {
     showDialog(
       context: context,
-      builder: (context) => _EstadisticasDialog(
-        pedidos: context.read<PedidoProvider>().pedidos,
-      ),
+      builder: (context) => _EstadisticasDialog(pedidos: pedidos),
     );
   }
 
-  List<dynamic> _filtrarYOrdenarPedidos(List<dynamic> pedidos) {
+  List<Pedido> _filtrarYOrdenarPedidos(List<Pedido> pedidos) {
     var resultado = pedidos;
 
     // Filtrar por búsqueda
@@ -114,27 +128,25 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
     // Filtrar por rango de fechas
     if (_rangoFechas != null) {
       resultado = resultado.where((p) {
-        // Aquí deberías usar la fecha real del pedido
-        // final fecha = p.fechaCreacion;
-        // return fecha.isAfter(_rangoFechas!.start) &&
-        //        fecha.isBefore(_rangoFechas!.end);
-        return true; // Temporal
+        final fecha = p.fechaHora;
+        return fecha.isAfter(_rangoFechas!.start.subtract(const Duration(days: 1))) &&
+            fecha.isBefore(_rangoFechas!.end.add(const Duration(days: 1)));
       }).toList();
     }
 
     // Ordenar
     switch (_ordenarPor) {
       case 'reciente':
-        resultado.sort((a, b) => b.id.compareTo(a.id));
+        resultado.sort((a, b) => b.fechaHora.compareTo(a.fechaHora));
         break;
       case 'antiguo':
-        resultado.sort((a, b) => a.id.compareTo(b.id));
+        resultado.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
         break;
       case 'monto_mayor':
-        resultado.sort((a, b) => (b.total ?? 0).compareTo(a.total ?? 0));
+        resultado.sort((a, b) => b.total.compareTo(a.total));
         break;
       case 'monto_menor':
-        resultado.sort((a, b) => (a.total ?? 0).compareTo(b.total ?? 0));
+        resultado.sort((a, b) => a.total.compareTo(b.total));
         break;
     }
 
@@ -147,10 +159,14 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
       title: 'Historial de Pedidos',
       currentRoute: '/cajero/historial',
       actions: [
-        IconButton(
-          icon: const Icon(Icons.bar_chart, color: Colors.white70),
-          onPressed: _mostrarEstadisticas,
-          tooltip: 'Estadísticas',
+        Consumer<PedidoProvider>(
+          builder: (context, provider, _) {
+            return IconButton(
+              icon: const Icon(Icons.bar_chart, color: Colors.white70),
+              onPressed: () => _mostrarEstadisticas(provider.pedidos),
+              tooltip: 'Estadísticas',
+            );
+          },
         ),
         IconButton(
           icon: const Icon(Icons.refresh, color: Colors.white70),
@@ -160,23 +176,35 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
       ],
       child: Column(
         children: [
-          // Barra de búsqueda y filtros
           _buildSearchAndFilters(),
-
-          // Chips de filtros activos
           _buildActiveFilters(),
-
-          // Lista de pedidos
           Expanded(
             child: Consumer<PedidoProvider>(
               builder: (context, provider, _) {
+                print('=== DEBUG HISTORIAL ===');
+                print('Total pedidos: ${provider.pedidos.length}');
+
                 if (provider.status == PedidoStatus.loading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.secondary),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(color: AppColors.secondary),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Cargando historial...',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
                 final pedidosFiltrados = _filtrarYOrdenarPedidos(provider.pedidos);
+
+                print('Pedidos filtrados: ${pedidosFiltrados.length}');
 
                 if (pedidosFiltrados.isEmpty) {
                   return _buildEmptyState();
@@ -219,7 +247,6 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
       ),
       child: Column(
         children: [
-          // Búsqueda
           TextField(
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
@@ -254,13 +281,10 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
             },
           ),
           const SizedBox(height: 16),
-
-          // Botones de filtros
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                // Filtro de estado
                 _FilterButton(
                   icon: Icons.filter_list,
                   label: 'Estado',
@@ -268,8 +292,6 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
                   onTap: () => _mostrarFiltroEstado(),
                 ),
                 const SizedBox(width: 8),
-
-                // Filtro de fecha
                 _FilterButton(
                   icon: Icons.date_range,
                   label: _rangoFechas == null
@@ -279,8 +301,6 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
                   onTap: _seleccionarRangoFechas,
                 ),
                 const SizedBox(width: 8),
-
-                // Ordenar por
                 _FilterButton(
                   icon: Icons.sort,
                   label: _obtenerTextoOrden(),
@@ -288,8 +308,6 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
                   onTap: () => _mostrarOpcionesOrden(),
                 ),
                 const SizedBox(width: 8),
-
-                // Limpiar filtros
                 if (_filtroEstado != null ||
                     _rangoFechas != null ||
                     _ordenarPor != 'reciente')
@@ -326,15 +344,15 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
         children: [
           if (_filtroEstado != null)
             Chip(
-              label: Text(_obtenerTextoEstado(_filtroEstado!)),
+              label: Text(_filtroEstado!.getTexto()),
               deleteIcon: const Icon(Icons.close, size: 18),
               onDeleted: () {
                 setState(() => _filtroEstado = null);
               },
-              backgroundColor: _obtenerColorEstado(_filtroEstado!).withOpacity(0.2),
-              deleteIconColor: _obtenerColorEstado(_filtroEstado!),
+              backgroundColor: _filtroEstado!.getColor().withOpacity(0.2),
+              deleteIconColor: _filtroEstado!.getColor(),
               labelStyle: TextStyle(
-                color: _obtenerColorEstado(_filtroEstado!),
+                color: _filtroEstado!.getColor(),
                 fontSize: 12,
               ),
             ),
@@ -572,9 +590,12 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
         return 'Ordenar';
     }
   }
+}
 
-  String _obtenerTextoEstado(EstadoPedido estado) {
-    switch (estado) {
+// Extension para facilitar acceso a propiedades de estado
+extension EstadoPedidoExtension on EstadoPedido {
+  String getTexto() {
+    switch (this) {
       case EstadoPedido.PENDIENTE:
         return 'Pendiente';
       case EstadoPedido.EN_PREPARACION:
@@ -588,8 +609,8 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
     }
   }
 
-  Color _obtenerColorEstado(EstadoPedido estado) {
-    switch (estado) {
+  Color getColor() {
+    switch (this) {
       case EstadoPedido.PENDIENTE:
         return AppColors.warning;
       case EstadoPedido.EN_PREPARACION:
@@ -602,228 +623,22 @@ class _HistorialPedidosScreenState extends State<HistorialPedidosScreen> {
         return AppColors.error;
     }
   }
-}
 
-// ============================================================================
-// PANTALLA: TODOS LOS PEDIDOS
-// ============================================================================
-
-class TodosPedidosScreen extends StatefulWidget {
-  const TodosPedidosScreen({super.key});
-
-  @override
-  State<TodosPedidosScreen> createState() => _TodosPedidosScreenState();
-}
-
-class _TodosPedidosScreenState extends State<TodosPedidosScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  String _searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 6, vsync: this);
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    await context.read<PedidoProvider>().loadPedidos();
-  }
-
-  void _verDetalles(dynamic pedido) {
-    showDialog(
-      context: context,
-      builder: (context) => _PedidoDetalleDialog(pedido: pedido),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return CajeroLayout(
-      title: 'Todos los Pedidos',
-      currentRoute: '/cajero/todos',
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh, color: Colors.white70),
-          onPressed: _loadData,
-          tooltip: 'Actualizar',
-        ),
-      ],
-      child: Column(
-        children: [
-          // Tabs
-          Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A1A1A),
-              border: Border(
-                bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1),
-              ),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              indicatorColor: AppColors.secondary,
-              labelColor: AppColors.secondary,
-              unselectedLabelColor: Colors.white60,
-              tabAlignment: TabAlignment.start,
-              tabs: const [
-                Tab(text: 'Todos'),
-                Tab(text: 'Pendientes'),
-                Tab(text: 'En Cocina'),
-                Tab(text: 'Listos'),
-                Tab(text: 'Entregados'),
-                Tab(text: 'Cancelados'),
-              ],
-            ),
-          ),
-
-          // Barra de búsqueda
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A1A1A),
-              border: Border(
-                bottom: BorderSide(color: Color(0xFF2A2A2A), width: 1),
-              ),
-            ),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Buscar pedido...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: const Icon(Icons.search, color: Colors.white60),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.white60),
-                  onPressed: () {
-                    setState(() => _searchQuery = '');
-                  },
-                )
-                    : null,
-                filled: true,
-                fillColor: const Color(0xFF0A0A0A),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                  const BorderSide(color: AppColors.secondary, width: 2),
-                ),
-              ),
-              onChanged: (value) {
-                setState(() => _searchQuery = value);
-              },
-            ),
-          ),
-
-          // Contenido de tabs
-          Expanded(
-            child: Consumer<PedidoProvider>(
-              builder: (context, provider, _) {
-                if (provider.status == PedidoStatus.loading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.secondary),
-                  );
-                }
-
-                return TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildPedidosList(provider.pedidos, null),
-                    _buildPedidosList(
-                        provider.pedidos, EstadoPedido.PENDIENTE),
-                    _buildPedidosList(
-                        provider.pedidos, EstadoPedido.EN_PREPARACION),
-                    _buildPedidosList(provider.pedidos, EstadoPedido.LISTO),
-                    _buildPedidosList(
-                        provider.pedidos, EstadoPedido.ENTREGADO),
-                    _buildPedidosList(
-                        provider.pedidos, EstadoPedido.CANCELADO),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPedidosList(List<dynamic> todosPedidos, EstadoPedido? estado) {
-    var pedidos = todosPedidos;
-
-    // Filtrar por estado si se especifica
-    if (estado != null) {
-      pedidos = pedidos.where((p) => p.estado == estado).toList();
+  IconData getIcon() {
+    switch (this) {
+      case EstadoPedido.PENDIENTE:
+        return Icons.pending_actions;
+      case EstadoPedido.EN_PREPARACION:
+        return Icons.restaurant;
+      case EstadoPedido.LISTO:
+        return Icons.check_circle;
+      case EstadoPedido.ENTREGADO:
+        return Icons.done_all;
+      case EstadoPedido.CANCELADO:
+        return Icons.cancel;
     }
-
-    // Filtrar por búsqueda
-    if (_searchQuery.isNotEmpty) {
-      pedidos = pedidos
-          .where((p) => p.id.toString().contains(_searchQuery))
-          .toList();
-    }
-
-    if (pedidos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 80,
-              color: Colors.white.withOpacity(0.3),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No hay pedidos',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      backgroundColor: const Color(0xFF1A1A1A),
-      color: AppColors.secondary,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(24),
-        itemCount: pedidos.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final pedido = pedidos[index];
-          return _TodosPedidosCard(
-            pedido: pedido,
-            onTap: () => _verDetalles(pedido),
-          );
-        },
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 }
-
-// ============================================================================
-// WIDGETS COMPARTIDOS
-// ============================================================================
 
 class _FilterButton extends StatelessWidget {
   final IconData icon;
@@ -849,9 +664,7 @@ class _FilterButton extends StatelessWidget {
         backgroundColor:
         isActive ? AppColors.secondary.withOpacity(0.1) : Colors.transparent,
         side: BorderSide(
-          color: isActive
-              ? AppColors.secondary
-              : const Color(0xFF2A2A2A),
+          color: isActive ? AppColors.secondary : const Color(0xFF2A2A2A),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
@@ -863,7 +676,7 @@ class _FilterButton extends StatelessWidget {
 }
 
 class _HistorialPedidoCard extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
   final VoidCallback onVerDetalles;
   final VoidCallback onReimprimir;
 
@@ -873,55 +686,8 @@ class _HistorialPedidoCard extends StatelessWidget {
     required this.onReimprimir,
   });
 
-  Color get _estadoColor {
-    switch (pedido.estado) {
-      case EstadoPedido.PENDIENTE:
-        return AppColors.warning;
-      case EstadoPedido.EN_PREPARACION:
-        return AppColors.info;
-      case EstadoPedido.LISTO:
-        return AppColors.success;
-      case EstadoPedido.ENTREGADO:
-        return AppColors.success;
-      case EstadoPedido.CANCELADO:
-        return AppColors.error;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData get _estadoIcon {
-    switch (pedido.estado) {
-      case EstadoPedido.PENDIENTE:
-        return Icons.pending_actions;
-      case EstadoPedido.EN_PREPARACION:
-        return Icons.restaurant;
-      case EstadoPedido.LISTO:
-        return Icons.check_circle;
-      case EstadoPedido.ENTREGADO:
-        return Icons.done_all;
-      case EstadoPedido.CANCELADO:
-        return Icons.cancel;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
-  String get _estadoTexto {
-    switch (pedido.estado) {
-      case EstadoPedido.PENDIENTE:
-        return 'Pendiente';
-      case EstadoPedido.EN_PREPARACION:
-        return 'En Cocina';
-      case EstadoPedido.LISTO:
-        return 'Listo';
-      case EstadoPedido.ENTREGADO:
-        return 'Entregado';
-      case EstadoPedido.CANCELADO:
-        return 'Cancelado';
-      default:
-        return 'Desconocido';
-    }
+  String _formatearFecha(DateTime fechaHora) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(fechaHora);
   }
 
   @override
@@ -939,18 +705,19 @@ class _HistorialPedidoCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Indicador de estado
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _estadoColor.withOpacity(0.1),
+                  color: pedido.estado.getColor().withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(_estadoIcon, color: _estadoColor, size: 24),
+                child: Icon(
+                  pedido.estado.getIcon(),
+                  color: pedido.estado.getColor(),
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 16),
-
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -972,15 +739,15 @@ class _HistorialPedidoCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _estadoColor.withOpacity(0.2),
+                            color: pedido.estado.getColor().withOpacity(0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            _estadoTexto,
+                            pedido.estado.getTexto(),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: _estadoColor,
+                              color: pedido.estado.getColor(),
                             ),
                           ),
                         ),
@@ -988,7 +755,7 @@ class _HistorialPedidoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${pedido.items?.length ?? 0} items • ${TimeOfDay.now().format(context)}',
+                      '${pedido.detalles.length} items • ${_formatearFecha(pedido.fechaHora)}',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withOpacity(0.6),
@@ -997,13 +764,11 @@ class _HistorialPedidoCard extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Total y acciones
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                    'Bs. ${pedido.total.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -1029,154 +794,14 @@ class _HistorialPedidoCard extends StatelessWidget {
   }
 }
 
-class _TodosPedidosCard extends StatelessWidget {
-  final dynamic pedido;
-  final VoidCallback onTap;
-
-  const _TodosPedidosCard({
-    required this.pedido,
-    required this.onTap,
-  });
-
-  Color get _estadoColor {
-    switch (pedido.estado) {
-      case EstadoPedido.PENDIENTE:
-        return AppColors.warning;
-      case EstadoPedido.EN_PREPARACION:
-        return AppColors.info;
-      case EstadoPedido.LISTO:
-        return AppColors.success;
-      case EstadoPedido.ENTREGADO:
-        return AppColors.success;
-      case EstadoPedido.CANCELADO:
-        return AppColors.error;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData get _estadoIcon {
-    switch (pedido.estado) {
-      case EstadoPedido.PENDIENTE:
-        return Icons.pending_actions;
-      case EstadoPedido.EN_PREPARACION:
-        return Icons.restaurant;
-      case EstadoPedido.LISTO:
-        return Icons.check_circle;
-      case EstadoPedido.ENTREGADO:
-        return Icons.done_all;
-      case EstadoPedido.CANCELADO:
-        return Icons.cancel;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
-  String get _estadoTexto {
-    switch (pedido.estado) {
-      case EstadoPedido.PENDIENTE:
-        return 'Pendiente';
-      case EstadoPedido.EN_PREPARACION:
-        return 'En Cocina';
-      case EstadoPedido.LISTO:
-        return 'Listo';
-      case EstadoPedido.ENTREGADO:
-        return 'Entregado';
-      case EstadoPedido.CANCELADO:
-        return 'Cancelado';
-      default:
-        return 'Desconocido';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Barra de estado
-              Container(
-                width: 4,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: _estadoColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '#${pedido.id}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(_estadoIcon, size: 16, color: _estadoColor),
-                        const SizedBox(width: 4),
-                        Text(
-                          _estadoTexto,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _estadoColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${pedido.items?.length ?? 0} items',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Total
-              Text(
-                '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.secondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Dialog de detalles
 class _PedidoDetalleDialog extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
 
   const _PedidoDetalleDialog({required this.pedido});
+
+  String _formatearFecha(DateTime fechaHora) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(fechaHora);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1197,13 +822,58 @@ class _PedidoDetalleDialog extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Pedido #${pedido.id}',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pedido #${pedido.id}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatearFecha(pedido.fechaHora),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: pedido.estado.getColor().withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: pedido.estado.getColor().withOpacity(0.5),
                       ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          pedido.estado.getIcon(),
+                          size: 16,
+                          color: pedido.estado.getColor(),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          pedido.estado.getTexto(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: pedido.estado.getColor(),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   IconButton(
@@ -1219,15 +889,6 @@ class _PedidoDetalleDialog extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Detalles del pedido',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -1235,12 +896,182 @@ class _PedidoDetalleDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF2A2A2A)),
                       ),
-                      child: Text(
-                        'Items, notas, etc...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.8),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Tipo de Servicio',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.6),
+                                ),
+                              ),
+                              Text(
+                                pedido.getTipoServicioTexto(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Atendido por',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.6),
+                                ),
+                              ),
+                              Text(
+                                pedido.usuarioNombre ?? 'Sin usuario',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Items del Pedido (${pedido.detalles.length})',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...pedido.detalles.map((detalle) {
+                      final sabores = [
+                        detalle.sabor1Nombre,
+                        detalle.sabor2Nombre,
+                        detalle.sabor3Nombre
+                      ].where((s) => s != null && s.isNotEmpty).join(', ');
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0A0A0A),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
                         ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${detalle.cantidad}x',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    detalle.productoNombre ?? 'Pizza',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (detalle.presentacionNombre != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      detalle.presentacionNombre!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white.withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ],
+                                  if (sabores.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      sabores,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Text(
+                              'Bs. ${detalle.subtotal.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.secondary.withOpacity(0.2),
+                            AppColors.secondary.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.secondary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'Bs. ${pedido.total.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1254,17 +1085,20 @@ class _PedidoDetalleDialog extends StatelessWidget {
   }
 }
 
-// Dialog de estadísticas
 class _EstadisticasDialog extends StatelessWidget {
-  final List<dynamic> pedidos;
+  final List<Pedido> pedidos;
 
   const _EstadisticasDialog({required this.pedidos});
 
   @override
   Widget build(BuildContext context) {
-    final totalVentas = pedidos.fold<double>(
-        0.0, (sum, p) => sum + (p.total ?? 0));
+    final totalVentas = pedidos.fold<double>(0.0, (sum, p) => sum + p.total);
     final promedioVenta = pedidos.isEmpty ? 0.0 : totalVentas / pedidos.length;
+
+    final pedidosPorEstado = <EstadoPedido, int>{};
+    for (var pedido in pedidos) {
+      pedidosPorEstado[pedido.estado] = (pedidosPorEstado[pedido.estado] ?? 0) + 1;
+    }
 
     return Dialog(
       backgroundColor: const Color(0xFF1A1A1A),
@@ -1302,17 +1136,75 @@ class _EstadisticasDialog extends StatelessWidget {
             const SizedBox(height: 16),
             _StatItem(
               label: 'Total Ventas',
-              value: '\$${totalVentas.toStringAsFixed(2)}',
+              value: 'Bs. ${totalVentas.toStringAsFixed(2)}',
               icon: Icons.attach_money,
               color: AppColors.success,
             ),
             const SizedBox(height: 16),
             _StatItem(
               label: 'Promedio por Pedido',
-              value: '\$${promedioVenta.toStringAsFixed(2)}',
+              value: 'Bs. ${promedioVenta.toStringAsFixed(2)}',
               icon: Icons.trending_up,
               color: AppColors.info,
             ),
+            if (pedidosPorEstado.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Por Estado',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...pedidosPorEstado.entries.map((entry) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: entry.key.getColor().withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: entry.key.getColor().withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            entry.key.getIcon(),
+                            color: entry.key.getColor(),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            entry.key.getTexto(),
+                            style: TextStyle(
+                              color: entry.key.getColor(),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '${entry.value}',
+                        style: TextStyle(
+                          color: entry.key.getColor(),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
           ],
         ),
       ),

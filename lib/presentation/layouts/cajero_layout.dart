@@ -321,20 +321,6 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                     );
                   },
                 ),
-                _SidebarItem(
-                  icon: Icons.receipt_long,
-                  title: 'Todos los Pedidos',
-                  isActive: widget.currentRoute == '/cajero/todos',
-                  isExpanded: uiProvider.isSidebarExpanded,
-                  onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const TodosPedidosScreen(),
-                      ),
-                    );
-                  },
-                ),
               ],
             ),
           ),
