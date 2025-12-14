@@ -103,14 +103,14 @@ class _CocinaScreenState extends State<CocinaScreen> {
                 children: [
                   const Icon(
                     Icons.access_time,
-                    color: Color(0xFF4CAF50),
+                    color: Colors.white,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     DateFormat('HH:mm:ss').format(_currentTime),
                     style: const TextStyle(
-                      color: Color(0xFF4CAF50),
+                      color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'monospace',
