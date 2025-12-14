@@ -30,6 +30,9 @@ class ApiConstants {
   static const String productos = '$apiVersion/cliente/productos';
   static String productoById(int id) => '$apiVersion/cliente/productos/$id';
 
+  static String topSabores(String inicio, String fin) =>
+      '$apiVersion/estadisticas/top-sabores?fechaInicio=$inicio&fechaFin=$fin';
+
   // ========== SABORES ENDPOINTS ==========
   static const String sabores = '$apiVersion/admin/sabores';
   static String saborById(int id) => '$apiVersion/admin/sabores/$id';
