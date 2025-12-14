@@ -12,16 +12,16 @@ import '../../../layouts/admin_layout.dart';
 import '../../cajero/pedido_detail_dialog.dart';
 
 
-class PedidosListScreen extends StatefulWidget {
+class AdminPedidosListScreen extends StatefulWidget {
   final EstadoPedido? estado;
 
-  const PedidosListScreen({super.key, this.estado});
+  const AdminPedidosListScreen({super.key, this.estado});
 
   @override
-  State<PedidosListScreen> createState() => _PedidosListScreenState();
+  State<AdminPedidosListScreen> createState() => _PedidosListScreenState();
 }
 
-class _PedidosListScreenState extends State<PedidosListScreen> {
+class _PedidosListScreenState extends State<AdminPedidosListScreen> {
   EstadoPedido? _selectedEstado;
 
   @override

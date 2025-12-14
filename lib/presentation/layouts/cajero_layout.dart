@@ -282,7 +282,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PedidosListScreen(),
+                                builder: (_) => const PedidosListosScreen(),
                               ),
                             );
                           },
@@ -611,9 +611,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PedidosListScreen(
-                                  estado: EstadoPedido.PENDIENTE,
-                                ),
+                                builder: (_) => const PedidosPendientesScreen()
                               ),
                             );
                           },
@@ -628,9 +626,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PedidosListScreen(
-                                  estado: EstadoPedido.EN_PREPARACION,
-                                ),
+                                builder: (_) => const PedidosEnCocinaScreen(),
                               ),
                             );
                           },
@@ -645,9 +641,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PedidosListScreen(
-                                  estado: EstadoPedido.LISTO,
-                                ),
+                                builder: (_) => const PedidosListosScreen(),
                               ),
                             );
                           },
@@ -666,7 +660,7 @@ class _CajeroLayoutState extends State<CajeroLayout> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const PedidosListScreen(),
+                        builder: (_) => const HistorialPedidosScreen(),
                       ),
                     );
                   },
