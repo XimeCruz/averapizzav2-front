@@ -1,5 +1,6 @@
 // lib/presentation/layouts/admin_layout.dart
 
+import 'package:avp_frontend/presentation/screens/admin/predicciones_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -317,6 +318,18 @@ class _AdminLayoutState extends State<AdminLayout> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const ReportesScreen()),
+                    );
+                  },
+                ),
+                _SidebarItem(
+                  icon: Icons.assessment_outlined,
+                  title: 'Predicciones',
+                  isActive: widget.currentRoute == '/admin/predcicciones',
+                  isExpanded: uiProvider.isSidebarExpanded,
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PrediccionesScreen()),
                     );
                   },
                 ),
