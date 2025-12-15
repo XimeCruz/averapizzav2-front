@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/pedido_model.dart';
 import '../../layouts/cliente_layout.dart';
 import '../../providers/pedido_provider.dart';
 
@@ -23,24 +24,48 @@ class _MisPedidosScreenState extends State<MisPedidosScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadPedidos();
+    _tabController.addListener(_onTabChanged);
+    _loadInitialData();
     _startAutoRefresh();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) {
+      // Cargar datos según el tab seleccionado
+      if (_tabController.index == 0) {
+        _loadPedidosActivos();
+      } else {
+        _loadPedidosHistorial();
+      }
+    }
+  }
+
+  void _loadInitialData() {
+    // Cargar pedidos activos por defecto (primer tab)
+    _loadPedidosActivos();
   }
 
   void _startAutoRefresh() {
     Future.delayed(const Duration(seconds: 30), () {
       if (mounted) {
-        _loadPedidos();
+        // Solo refrescar si estamos en el tab de activos
+        if (_tabController.index == 0) {
+          _loadPedidosActivos();
+        }
         _startAutoRefresh();
       }
     });
   }
 
-  Future<void> _loadPedidos() async {
-    await context.read<PedidoProvider>().loadPedidos();
+  Future<void> _loadPedidosActivos() async {
+    await context.read<PedidoProvider>().loadPedidosHoyClienteHistorial();
   }
 
-  void _verDetalles(dynamic pedido) {
+  Future<void> _loadPedidosHistorial() async {
+    await context.read<PedidoProvider>().loadPedidosClienteHistorial();
+  }
+
+  void _verDetalles(Pedido pedido) {
     showDialog(
       context: context,
       builder: (context) => _PedidoDetalleDialog(pedido: pedido),
@@ -55,7 +80,14 @@ class _MisPedidosScreenState extends State<MisPedidosScreen>
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh, color: Colors.white70),
-          onPressed: _loadPedidos,
+          onPressed: () {
+            // Refrescar según el tab actual
+            if (_tabController.index == 0) {
+              _loadPedidosActivos();
+            } else {
+              _loadPedidosHistorial();
+            }
+          },
           tooltip: 'Actualizar',
         ),
       ],
@@ -105,11 +137,11 @@ class _MisPedidosScreenState extends State<MisPedidosScreen>
               controller: _tabController,
               children: [
                 _PedidosActivosTab(
-                  onRefresh: _loadPedidos,
+                  onRefresh: _loadPedidosActivos,
                   onVerDetalles: _verDetalles,
                 ),
                 _PedidosHistorialTab(
-                  onRefresh: _loadPedidos,
+                  onRefresh: _loadPedidosHistorial,
                   onVerDetalles: _verDetalles,
                 ),
               ],
@@ -133,7 +165,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen>
 
 class _PedidosActivosTab extends StatelessWidget {
   final VoidCallback onRefresh;
-  final Function(dynamic) onVerDetalles;
+  final Function(Pedido) onVerDetalles;
 
   const _PedidosActivosTab({
     required this.onRefresh,
@@ -150,18 +182,17 @@ class _PedidosActivosTab extends StatelessWidget {
           );
         }
 
-        // Filtrar solo pedidos activos
-        final pedidosActivos = provider.pedidos
-            .where((p) =>
-        p.estado == EstadoPedido.PENDIENTE ||
-            p.estado == EstadoPedido.EN_PREPARACION ||
-            p.estado == EstadoPedido.LISTO)
-            .toList();
+        if (provider.status == PedidoStatus.error) {
+          return _buildErrorState(
+            message: provider.errorMessage ?? 'Error al cargar pedidos',
+            onRetry: onRefresh,
+          );
+        }
 
-        // Ordenar por más reciente
-        pedidosActivos.sort((a, b) => (b.id ?? 0).compareTo(a.id ?? 0));
+        // El backend ya trae solo los pedidos activos (de hoy)
+        final pedidos = provider.pedidos;
 
-        if (pedidosActivos.isEmpty) {
+        if (pedidos.isEmpty) {
           return _buildEmptyState(
             icon: Icons.receipt_long_outlined,
             title: 'No tienes pedidos activos',
@@ -175,10 +206,10 @@ class _PedidosActivosTab extends StatelessWidget {
           color: AppColors.secondary,
           child: ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: pedidosActivos.length,
+            itemCount: pedidos.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
-              final pedido = pedidosActivos[index];
+              final pedido = pedidos[index];
               return _PedidoActivoCard(
                 pedido: pedido,
                 onTap: () => onVerDetalles(pedido),
@@ -221,6 +252,48 @@ class _PedidosActivosTab extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildErrorState({
+    required String message,
+    required VoidCallback onRetry,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 80, color: AppColors.error.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          const Text(
+            'Error al cargar',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.6),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Reintentar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondary,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ============================================================================
@@ -229,7 +302,7 @@ class _PedidosActivosTab extends StatelessWidget {
 
 class _PedidosHistorialTab extends StatelessWidget {
   final VoidCallback onRefresh;
-  final Function(dynamic) onVerDetalles;
+  final Function(Pedido) onVerDetalles;
 
   const _PedidosHistorialTab({
     required this.onRefresh,
@@ -246,17 +319,39 @@ class _PedidosHistorialTab extends StatelessWidget {
           );
         }
 
-        // Filtrar pedidos completados o cancelados
-        final pedidosHistorial = provider.pedidos
-            .where((p) =>
-        p.estado == EstadoPedido.ENTREGADO ||
-            p.estado == EstadoPedido.CANCELADO)
-            .toList();
+        if (provider.status == PedidoStatus.error) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 80, color: AppColors.error.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error al cargar historial',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: onRefresh,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reintentar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
 
-        // Ordenar por más reciente
-        pedidosHistorial.sort((a, b) => (b.id ?? 0).compareTo(a.id ?? 0));
+        // El backend ya trae solo el historial (entregados/cancelados)
+        final pedidos = provider.pedidos;
 
-        if (pedidosHistorial.isEmpty) {
+        if (pedidos.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -294,10 +389,10 @@ class _PedidosHistorialTab extends StatelessWidget {
           color: AppColors.secondary,
           child: ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: pedidosHistorial.length,
+            itemCount: pedidos.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              final pedido = pedidosHistorial[index];
+              final pedido = pedidos[index];
               return _PedidoHistorialCard(
                 pedido: pedido,
                 onTap: () => onVerDetalles(pedido),
@@ -315,7 +410,7 @@ class _PedidosHistorialTab extends StatelessWidget {
 // ============================================================================
 
 class _PedidoActivoCard extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
   final VoidCallback onTap;
 
   const _PedidoActivoCard({
@@ -430,7 +525,7 @@ class _PedidoActivoCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Bs. ${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                            'Bs. ${pedido.total.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -451,7 +546,7 @@ class _PedidoActivoCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${pedido.items?.length ?? 0} items',
+                            '${pedido.detalles.length} items',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -579,7 +674,7 @@ class _PedidoActivoCard extends StatelessWidget {
 }
 
 class _PedidoHistorialCard extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
   final VoidCallback onTap;
 
   const _PedidoHistorialCard({
@@ -593,6 +688,9 @@ class _PedidoHistorialCard extends StatelessWidget {
     final color = esEntregado ? AppColors.success : AppColors.error;
     final icon = esEntregado ? Icons.done_all : Icons.cancel;
     final texto = esEntregado ? 'Entregado' : 'Cancelado';
+
+    // Formatear fecha
+    final fecha = DateFormat('dd/MM/yyyy HH:mm').format(pedido.fechaHora);
 
     return Container(
       decoration: BoxDecoration(
@@ -655,7 +753,7 @@ class _PedidoHistorialCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '${pedido.items?.length ?? 0} items • ${TimeOfDay.now().format(context)}',
+                        '${pedido.detalles.length} items • $fecha',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.white.withOpacity(0.6),
@@ -668,7 +766,7 @@ class _PedidoHistorialCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                      'Bs. ${pedido.total.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -697,7 +795,7 @@ class _PedidoHistorialCard extends StatelessWidget {
 // ============================================================================
 
 class _PedidoDetalleDialog extends StatelessWidget {
-  final dynamic pedido;
+  final Pedido pedido;
 
   const _PedidoDetalleDialog({required this.pedido});
 
@@ -736,7 +834,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _getEstadoTexto(pedido.estado),
+                          pedido.getEstadoTexto(),
                           style: TextStyle(
                             fontSize: 14,
                             color: _getEstadoColor(pedido.estado),
@@ -779,11 +877,19 @@ class _PedidoDetalleDialog extends StatelessWidget {
                         border: Border.all(color: const Color(0xFF2A2A2A)),
                       ),
                       child: Column(
-                        children: [
-                          _buildDetailRow('2x', 'Pizza Muzzarella', 'Bs. 36.00'),
-                          const SizedBox(height: 8),
-                          _buildDetailRow('1x', 'Coca Cola 1.5L', 'Bs. 5.00'),
-                        ],
+                        children: pedido.detalles.map((detalle) {
+                          final nombreProducto = detalle.productoNombre ?? 'Producto';
+                          final subtotal = detalle.subtotal;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _buildDetailRow(
+                              '${detalle.cantidad}x',
+                              nombreProducto,
+                              'Bs. ${subtotal.toStringAsFixed(2)}',
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
 
@@ -811,19 +917,19 @@ class _PedidoDetalleDialog extends StatelessWidget {
                           _buildInfoRow(
                             Icons.schedule,
                             'Fecha',
-                            DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
+                            DateFormat('dd/MM/yyyy HH:mm').format(pedido.fechaHora),
                           ),
                           const Divider(height: 24, color: Color(0xFF2A2A2A)),
                           _buildInfoRow(
                             Icons.delivery_dining,
-                            'Entrega',
-                            'Delivery',
+                            'Tipo',
+                            pedido.getTipoServicioTexto(),
                           ),
                           const Divider(height: 24, color: Color(0xFF2A2A2A)),
                           _buildInfoRow(
                             Icons.payment,
                             'Pago',
-                            'Tarjeta',
+                            pedido.metodoPago.name,
                           ),
                         ],
                       ),
@@ -858,7 +964,7 @@ class _PedidoDetalleDialog extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Bs. ${pedido.total?.toStringAsFixed(2) ?? '0.00'}',
+                            'Bs. ${pedido.total.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -932,31 +1038,19 @@ class _PedidoDetalleDialog extends StatelessWidget {
             ),
           ),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+        Flexible(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.right,
           ),
         ),
       ],
     );
-  }
-
-  String _getEstadoTexto(EstadoPedido estado) {
-    switch (estado) {
-      case EstadoPedido.PENDIENTE:
-        return 'Pendiente';
-      case EstadoPedido.EN_PREPARACION:
-        return 'Preparándose';
-      case EstadoPedido.LISTO:
-        return 'Listo';
-      case EstadoPedido.ENTREGADO:
-        return 'Entregado';
-      case EstadoPedido.CANCELADO:
-        return 'Cancelado';
-    }
   }
 
   Color _getEstadoColor(EstadoPedido estado) {

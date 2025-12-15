@@ -1,8 +1,4 @@
-// lib/data/repositories/pedido_repository.dart
-
 import 'dart:convert';
-
-import 'package:dio/dio.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
@@ -10,6 +6,77 @@ import '../models/pedido_model.dart';
 
 class PedidoRepository {
   final ApiClient _apiClient = ApiClient();
+
+  Future<Map<String, dynamic>> getEstadisticas(clienteId) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConstants.clientesEstadisticas(clienteId),
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Error al obtener estadísticas: ${e.toString()}');
+    }
+  }
+
+  Future<List<Pedido>> getHistorialHoy(clienteId) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConstants.clientesHistorialHoy(clienteId),
+      );
+
+      // La respuesta viene directamente como lista
+      final List<dynamic> pedidosJson = response.data is List
+          ? response.data
+          : (response.data['pedidos'] ?? response.data['data'] ?? []);
+
+      return pedidosJson.map((json) {
+        // Mapear el formato del backend al que espera tu modelo
+        return Pedido.fromJson({
+          'pedidoId': json['pedidoId'],
+          'idUsuario': int.tryParse(clienteId.toString()) ?? 0,
+          'nombreUsuario': json['nombreUsuario'],
+          'estado': json['estado'],
+          'tipoServicio': json['tipoServicio'],
+          'fechaHora': json['fecha'],
+          'metodoPago': json['metodoPago'] ?? 'EFECTIVO',
+          'total': json['total'],
+          'items': json['items'] ?? [],
+        });
+      }).toList();
+    } catch (e) {
+      print('Error detallado: $e');
+      throw Exception('Error al obtener historial de hoy: ${e.toString()}');
+    }
+  }
+
+  Future<List<Pedido>> getHistorialPedidos(clienteId) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConstants.clientesHistorial(clienteId),
+      );
+
+      final List<dynamic> pedidosJson = response.data is List
+          ? response.data
+          : (response.data['pedidos'] ?? response.data['data'] ?? []);
+
+      return pedidosJson.map((json) {
+        return Pedido.fromJson({
+          'pedidoId': json['pedidoId'],
+          'idUsuario': int.tryParse(clienteId.toString()) ?? 0,
+          'nombreUsuario': json['nombreUsuario'],
+          'estado': json['estado'],
+          'tipoServicio': json['tipoServicio'],
+          'fechaHora': json['fecha'],
+          'metodoPago': json['metodoPago'] ?? 'EFECTIVO',
+          'total': json['total'],
+          'items': json['items'] ?? [],
+        });
+      }).toList();
+    } catch (e) {
+      print('Error detallado: $e');
+      throw Exception('Error al obtener historial: ${e.toString()}');
+    }
+  }
 
   // ========== CAJERO - PEDIDOS ==========
   Future<Pedido> createPedido(CreatePedidoRequest request) async {

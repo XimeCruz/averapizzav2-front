@@ -18,6 +18,10 @@ class ApiConstants {
   static const String productosPublicos = '$apiVersion/auth/completo';
   static const String menu = '$apiVersion/cliente/productos/menu';
 
+  // ========== CLIENTES ENDPOINTS ==========
+  static String clientesEstadisticas(String idCliente) => '$apiVersion/dashboard/clientes/$idCliente/estadisticas';
+  static String clientesHistorial(String idCliente) => '$apiVersion/dashboard/clientes/$idCliente/historial-pedidos';
+  static String clientesHistorialHoy(String idCliente) => '$apiVersion/dashboard/historial/$idCliente/hoy';
 
   // ========== USUARIOS ENDPOINTS ==========
   static const String usuarios = '$apiVersion/dashboard/clientes';

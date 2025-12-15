@@ -4,11 +4,17 @@ import 'package:flutter/material.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/pedido_repository.dart';
 import '../../data/models/pedido_model.dart';
+import 'auth_provider.dart';
 
-enum PedidoStatus { initial, loading, loaded, error }
+enum PedidoStatus { initial, loading, loaded, error, success }
 
 class PedidoProvider extends ChangeNotifier {
-  final PedidoRepository _repository = PedidoRepository();
+  final PedidoRepository _repository;
+  final AuthProvider _authProvider;
+
+  PedidoProvider(this._repository, this._authProvider);
+
+  Map<String, dynamic>? _estadisticas;
 
   PedidoStatus _status = PedidoStatus.initial;
   List<Pedido> _pedidos = [];
@@ -23,6 +29,69 @@ class PedidoProvider extends ChangeNotifier {
   List<Pedido> get pedidosEnPreparacion => _pedidosEnPreparacion;
   List<Pedido> get pedidosListos => _pedidosListos;
   String? get errorMessage => _errorMessage;
+
+  Map<String, dynamic>? get estadisticas => _estadisticas;
+
+  String _getClienteId() {
+    final userId = _authProvider.userId;
+    if (userId == null) {
+      throw Exception('Usuario no autenticado');
+    }
+    return userId.toString();
+  }
+
+  Future<void> loadEstadisticas() async {
+    try {
+      final clienteId = await _getClienteId();
+      _estadisticas = await _repository.getEstadisticas(clienteId);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      debugPrint('Error en loadEstadisticas: $e');
+    }
+  }
+
+  /// Cargar todos los pedidos del historial
+  Future<void> loadPedidosClienteHistorial() async {
+    try {
+      _status = PedidoStatus.loading;
+      _errorMessage = null;
+      notifyListeners();
+
+      final clienteId = _getClienteId();
+      _pedidos = await _repository.getHistorialPedidos(clienteId);
+
+      _status = PedidoStatus.success;
+      notifyListeners();
+    } catch (e) {
+      _status = PedidoStatus.error;
+      _errorMessage = e.toString();
+      notifyListeners();
+      debugPrint('Error en loadPedidos: $e');
+    }
+  }
+
+  /// Cargar solo pedidos de hoy
+  Future<void> loadPedidosHoyClienteHistorial() async {
+    try {
+      _status = PedidoStatus.loading;
+      _errorMessage = null;
+      notifyListeners();
+
+      final clienteId = _getClienteId();
+      _pedidos = await _repository.getHistorialHoy(clienteId);
+
+      _status = PedidoStatus.success;
+      notifyListeners();
+    } catch (e) {
+      _status = PedidoStatus.error;
+      _errorMessage = e.toString();
+      notifyListeners();
+      debugPrint('Error en loadPedidosHoy: $e');
+    }
+  }
+
 
   // ========== CREAR PEDIDO ==========
   Future<Pedido?> createPedido(CreatePedidoRequest request) async {

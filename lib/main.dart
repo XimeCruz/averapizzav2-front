@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'core/storage/secure_storage.dart';
 import 'core/constants/app_colors.dart';
+import 'data/repositories/pedido_repository.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/producto_provider.dart';
 import 'presentation/providers/insumo_provider.dart';
@@ -23,9 +24,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-/* ============================================================
-   🚫 PAGE TRANSITION SIN ANIMACIÓN (GLOBAL)
-   ============================================================ */
 class NoAnimationPageTransitionsBuilder extends PageTransitionsBuilder {
   const NoAnimationPageTransitionsBuilder();
 
@@ -52,12 +50,23 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductoProvider()),
         ChangeNotifierProvider(create: (_) => InsumoProvider()),
         ChangeNotifierProvider(create: (_) => RecetaProvider()),
-        ChangeNotifierProvider(create: (_) => PedidoProvider()),
+        Provider(create: (_) => PedidoRepository()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => CarritoProvider()),
         ChangeNotifierProvider(create: (_) => UiProvider()),
-        ChangeNotifierProvider(create: (_) => MenuProvider())
+        ChangeNotifierProvider(create: (_) => MenuProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, PedidoProvider>(
+          create: (context) => PedidoProvider(
+            context.read<PedidoRepository>(),
+            context.read<AuthProvider>(),
+          ),
+          update: (context, auth, previous) => previous ?? PedidoProvider(
+            context.read<PedidoRepository>(),
+            auth,
+          ),
+        ),
+
       ],
       child: MaterialApp(
         title: 'A Vera Pizza Italia',
