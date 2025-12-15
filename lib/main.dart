@@ -1,4 +1,5 @@
 import 'package:avp_frontend/presentation/providers/carrito_provider.dart';
+import 'package:avp_frontend/presentation/providers/menu_provider.dart';
 import 'package:avp_frontend/presentation/providers/receta_provider.dart';
 import 'package:avp_frontend/presentation/providers/usuario_provider.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => CarritoProvider()),
         ChangeNotifierProvider(create: (_) => UiProvider()),
+        ChangeNotifierProvider(create: (_) => MenuProvider())
       ],
       child: MaterialApp(
         title: 'A Vera Pizza Italia',

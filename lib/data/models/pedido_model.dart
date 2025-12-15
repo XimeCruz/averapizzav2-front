@@ -176,11 +176,8 @@ class PizzaPedidoItem {
       'sabor2Id': sabor2Id,
       'sabor3Id': sabor3Id,
       'cantidad': cantidad,
+      'pesoKg': pesoKg ?? 0.0,
     };
-
-    if (pesoKg != null) {
-      map['pesoKg'] = pesoKg as int;
-    }
 
     return map;
   }
