@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../layouts/cliente_layout.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/cliente_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 
@@ -35,6 +37,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   void initState() {
     super.initState();
     _loadUserData();
+    _loadEstadisticas();
   }
 
   void _loadUserData() {
@@ -43,6 +46,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
     _nombreController.text = authProvider.userName ?? '';
     _emailController.text = authProvider.userEmail ?? '';
     // TODO: Cargar apellido, teléfono y dirección desde el provider
+  }
+
+  void _loadEstadisticas() {
+    final authProvider = context.read<AuthProvider>();
+    final clienteProvider = context.read<ClienteProvider>();
+
+    // Obtener el ID del cliente del AuthProvider
+    final idCliente = authProvider.userId;
+
+    if (idCliente != null) {
+      clienteProvider.loadEstadisticas(idCliente);
+    }
   }
 
   @override
@@ -564,62 +579,121 @@ class _PerfilScreenState extends State<PerfilScreen> {
   }
 
   Widget _buildStatsSection() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Mis Estadísticas',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+    return Consumer<ClienteProvider>(
+      builder: (context, clienteProvider, child) {
+        final estadisticas = clienteProvider.estadisticas;
+        final isLoading = clienteProvider.isLoading;
+        final error = clienteProvider.error;
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Mis Estadísticas',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
 
-          const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 600;
+              if (isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              else if (error != null)
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error al cargar estadísticas',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _loadEstadisticas,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              else if (estadisticas != null)
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth > 600;
+                      final formatter = NumberFormat.currency(
+                        locale: 'es_BO',
+                        symbol: 'Bs. ',
+                        decimalDigits: 2,
+                      );
 
-              return Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  _StatCard(
-                    icon: Icons.shopping_bag_outlined,
-                    label: 'Pedidos Realizados',
-                    value: '23',
-                    color: AppColors.primary,
-                    width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
+                      return Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          _StatCard(
+                            icon: Icons.shopping_bag_outlined,
+                            label: 'Pedidos Realizados',
+                            value: estadisticas.totalPedidos.toString(),
+                            color: AppColors.primary,
+                            width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
+                          ),
+                          _StatCard(
+                            icon: Icons.attach_money,
+                            label: 'Total Gastado',
+                            value: formatter.format(estadisticas.totalGastado),
+                            color: AppColors.accent,
+                            width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
+                          ),
+                          _StatCard(
+                            icon: Icons.local_pizza_outlined,
+                            label: 'Pizza Favorita',
+                            value: estadisticas.pizzaFavorita,
+                            color: AppColors.warning,
+                            width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                else
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text(
+                        'No hay estadísticas disponibles',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
                   ),
-                  _StatCard(
-                    icon: Icons.attach_money,
-                    label: 'Total Gastado',
-                    value: 'Bs. 1,250.00',
-                    color: AppColors.accent,
-                    width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
-                  ),
-                  _StatCard(
-                    icon: Icons.local_pizza_outlined,
-                    label: 'Pizza Favorita',
-                    value: 'Margarita',
-                    color: AppColors.warning,
-                    width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
-                  ),
-                ],
-              );
-            },
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:avp_frontend/presentation/providers/carrito_provider.dart';
+import 'package:avp_frontend/presentation/providers/cliente_provider.dart';
 import 'package:avp_frontend/presentation/providers/menu_provider.dart';
 import 'package:avp_frontend/presentation/providers/receta_provider.dart';
 import 'package:avp_frontend/presentation/providers/usuario_provider.dart';
@@ -9,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'core/storage/secure_storage.dart';
 import 'core/constants/app_colors.dart';
+import 'data/repositories/cliente_repository.dart';
 import 'data/repositories/pedido_repository.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/producto_provider.dart';
@@ -55,6 +57,17 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => CarritoProvider()),
         ChangeNotifierProvider(create: (_) => UiProvider()),
+        Provider(create: (_) => ClienteRepository()),
+        ChangeNotifierProxyProvider<AuthProvider, ClienteProvider>(
+          create: (context) => ClienteProvider(
+            context.read<ClienteRepository>(),
+            context.read<AuthProvider>(),
+          ),
+          update: (context, auth, previous) => previous ?? ClienteProvider(
+            context.read<ClienteRepository>(),
+            auth,
+          ),
+        ),
         ChangeNotifierProvider(create: (_) => MenuProvider()),
         ChangeNotifierProxyProvider<AuthProvider, PedidoProvider>(
           create: (context) => PedidoProvider(
