@@ -20,8 +20,8 @@ class ApiConstants {
 
   // ========== CLIENTES ENDPOINTS ==========
   static String clientesEstadisticas(String idCliente) => '$apiVersion/dashboard/clientes/$idCliente/estadisticas';
-  static String clientesHistorial(String idCliente) => '$apiVersion/dashboard/clientes/$idCliente/historial-pedidos';
-  static String clientesHistorialHoy(String idCliente) => '$apiVersion/dashboard/historial/$idCliente/hoy';
+  static String clientesHistorial(String idCliente) => '$apiVersion/cajero/pedidos/clientes/$idCliente/historial-pedidos';
+  static String clientesHistorialHoy(String idCliente) => '$apiVersion/cajero/pedidos/historial/$idCliente/hoy';
 
   // ========== USUARIOS ENDPOINTS ==========
   static const String usuarios = '$apiVersion/dashboard/clientes';
