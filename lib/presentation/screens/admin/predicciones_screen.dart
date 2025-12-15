@@ -22,12 +22,12 @@ class PrediccionDetalladaDTO {
 
   factory PrediccionDetalladaDTO.fromJson(Map<String, dynamic> json) {
     return PrediccionDetalladaDTO(
-      fecha: json['fecha'],
-      items: (json['items'] as List)
-          .map((item) => PrediccionItemDTO.fromJson(item))
-          .toList(),
-      totalPedidos: json['totalPedidos'],
-      confianzaPromedio: json['confianzaPromedio'].toDouble(),
+      fecha: json['fecha'] ?? '',
+      items: (json['items'] as List?)
+          ?.map((item) => PrediccionItemDTO.fromJson(item))
+          .toList() ?? [],
+      totalPedidos: json['totalPedidos'] ?? 0,
+      confianzaPromedio: (json['confianzaPromedio'] ?? 0.0).toDouble(),
     );
   }
 }
@@ -51,12 +51,12 @@ class PrediccionItemDTO {
 
   factory PrediccionItemDTO.fromJson(Map<String, dynamic> json) {
     return PrediccionItemDTO(
-      productoNombre: json['productoNombre'],
-      saborNombre: json['saborNombre'],
-      presentacion: json['presentacion'],
-      cantidad: json['cantidad'],
-      confianza: json['confianza'].toDouble(),
-      historico: HistoricoVentasDTO.fromJson(json['historico']),
+      productoNombre: json['productoNombre'] ?? '',
+      saborNombre: json['saborNombre'] ?? '',
+      presentacion: json['presentacion'] ?? '',
+      cantidad: json['cantidad'] ?? 0,
+      confianza: (json['confianza'] ?? 0.0).toDouble(),
+      historico: HistoricoVentasDTO.fromJson(json['historico'] ?? {}),
     );
   }
 }
@@ -76,30 +76,67 @@ class HistoricoVentasDTO {
 
   factory HistoricoVentasDTO.fromJson(Map<String, dynamic> json) {
     return HistoricoVentasDTO(
-      promedioUltimos7Dias: json['promedioUltimos7Dias'].toDouble(),
-      promedioUltimos30Dias: json['promedioUltimos30Dias'].toDouble(),
-      ventasAyer: json['ventasAyer'],
-      tendencia: json['tendencia'],
+      promedioUltimos7Dias: (json['promedioUltimos7Dias'] ?? 0.0).toDouble(),
+      promedioUltimos30Dias: (json['promedioUltimos30Dias'] ?? 0.0).toDouble(),
+      ventasAyer: json['ventasAyer'] ?? 0,
+      tendencia: json['tendencia'] ?? 'ESTABLE',
     );
   }
 }
 
 class EstadisticasDTO {
-  final double precision;
-  final int totalPredicciones;
-  final String tendenciaGeneral;
+  final String fechaInicio;
+  final String fechaFin;
+  final int totalPedidos;
+  final double ventaPromedioDiaria;
+  final String productoMasVendido;
+  final String saborMasVendido;
+  final List<VentaDiariaDTO> ventasPorDia;
 
   EstadisticasDTO({
-    required this.precision,
-    required this.totalPredicciones,
-    required this.tendenciaGeneral,
+    required this.fechaInicio,
+    required this.fechaFin,
+    required this.totalPedidos,
+    required this.ventaPromedioDiaria,
+    required this.productoMasVendido,
+    required this.saborMasVendido,
+    required this.ventasPorDia,
   });
 
   factory EstadisticasDTO.fromJson(Map<String, dynamic> json) {
     return EstadisticasDTO(
-      precision: json['precision'].toDouble(),
-      totalPredicciones: json['totalPredicciones'],
-      tendenciaGeneral: json['tendenciaGeneral'],
+      fechaInicio: json['fechaInicio'] ?? '',
+      fechaFin: json['fechaFin'] ?? '',
+      totalPedidos: json['totalPedidos'] ?? 0,
+      ventaPromedioDiaria: (json['ventaPromedioDiaria'] ?? 0.0).toDouble(),
+      productoMasVendido: json['productoMasVendido'] ?? 'N/A',
+      saborMasVendido: json['saborMasVendido'] ?? 'N/A',
+      ventasPorDia: (json['ventasPorDia'] as List?)
+          ?.map((v) => VentaDiariaDTO.fromJson(v))
+          .toList() ?? [],
+    );
+  }
+}
+
+class VentaDiariaDTO {
+  final String fecha;
+  final String diaSemana;
+  final int cantidadPedidos;
+  final double totalVentas;
+
+  VentaDiariaDTO({
+    required this.fecha,
+    required this.diaSemana,
+    required this.cantidadPedidos,
+    required this.totalVentas,
+  });
+
+  factory VentaDiariaDTO.fromJson(Map<String, dynamic> json) {
+    return VentaDiariaDTO(
+      fecha: json['fecha'] ?? '',
+      diaSemana: json['diaSemana'] ?? '',
+      cantidadPedidos: json['cantidadPedidos'] ?? 0,
+      totalVentas: (json['totalVentas'] ?? 0.0).toDouble(),
     );
   }
 }
@@ -116,7 +153,7 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
   final String baseUrl = 'http://localhost:8089/api/predicciones';
 
   PrediccionDetalladaDTO? prediccionManana;
-  PrediccionDetalladaDTO? prediccionSemana;
+  List<PrediccionDetalladaDTO>? prediccionesSemana;
   EstadisticasDTO? estadisticas;
 
   bool isLoading = false;
@@ -151,14 +188,15 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
     try {
       final response = await http.get(Uri.parse('$baseUrl/proxima-semana'));
       if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
         setState(() {
-          prediccionSemana = PrediccionDetalladaDTO.fromJson(
-            json.decode(response.body),
-          );
+          prediccionesSemana = jsonList
+              .map((json) => PrediccionDetalladaDTO.fromJson(json))
+              .toList();
         });
       }
     } catch (e) {
-      mostrarError('Error al cargar predicción de la semana');
+      mostrarError('Error al cargar predicción de la semana: $e');
     } finally {
       setState(() => isLoading = false);
     }
@@ -167,14 +205,35 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
   Future<void> cargarEstadisticas() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('$baseUrl/estadisticas'));
+      // Calcular rango de fechas: últimos 30 días
+      final fin = DateTime.now();
+      final inicio = fin.subtract(const Duration(days: 30));
+
+      // Formatear fechas en formato ISO (YYYY-MM-DD)
+      final inicioStr = '${inicio.year}-${inicio.month.toString().padLeft(2, '0')}-${inicio.day.toString().padLeft(2, '0')}';
+      final finStr = '${fin.year}-${fin.month.toString().padLeft(2, '0')}-${fin.day.toString().padLeft(2, '0')}';
+
+      final url = '$baseUrl/estadisticas?inicio=$inicioStr&fin=$finStr';
+      print('URL: $url'); // Debug
+
+      final response = await http.get(Uri.parse(url));
+      print('Status: ${response.statusCode}'); // Debug
+      print('Body: ${response.body}'); // Debug
+
       if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        print('JSON parsed: $jsonData'); // Debug
+
         setState(() {
-          estadisticas = EstadisticasDTO.fromJson(json.decode(response.body));
+          estadisticas = EstadisticasDTO.fromJson(jsonData);
         });
+      } else {
+        mostrarError('Error del servidor: ${response.statusCode}');
       }
-    } catch (e) {
-      mostrarError('Error al cargar estadísticas');
+    } catch (e, stackTrace) {
+      print('Error: $e'); // Debug
+      print('StackTrace: $stackTrace'); // Debug
+      mostrarError('Error al cargar estadísticas: $e');
     } finally {
       setState(() => isLoading = false);
     }
@@ -229,7 +288,7 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
           mostrarExito('Predicciones limpiadas');
           setState(() {
             prediccionManana = null;
-            prediccionSemana = null;
+            prediccionesSemana = null;
             estadisticas = null;
           });
         }
@@ -331,7 +390,7 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
           setState(() => vistaActual = vista);
           if (vista == 'manana' && prediccionManana == null) {
             cargarPrediccionManana();
-          } else if (vista == 'semana' && prediccionSemana == null) {
+          } else if (vista == 'semana' && prediccionesSemana == null) {
             cargarPrediccionSemana();
           } else if (vista == 'estadisticas' && estadisticas == null) {
             cargarEstadisticas();
@@ -365,7 +424,7 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
     if (vistaActual == 'manana') {
       return _buildPrediccion(prediccionManana);
     } else if (vistaActual == 'semana') {
-      return _buildPrediccion(prediccionSemana);
+      return _buildPrediccionesSemana();
     } else {
       return _buildEstadisticas();
     }
@@ -465,6 +524,208 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
         // Lista de predicciones
         ...prediccion.items.map((item) => _buildPrediccionCard(item)).toList(),
       ],
+    );
+  }
+
+  Widget _buildPrediccionesSemana() {
+    if (prediccionesSemana == null || prediccionesSemana!.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.calendar_month_outlined,
+              size: 64,
+              color: Colors.white.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No hay predicciones de la semana',
+              style: TextStyle(color: Colors.white60, fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: generarPredicciones,
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Generar Predicciones'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: prediccionesSemana!.length,
+      itemBuilder: (context, index) {
+        final prediccion = prediccionesSemana![index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2A2A2A), width: 1),
+          ),
+          child: Theme(
+            data: ThemeData(
+              dividerColor: Colors.transparent,
+              colorScheme: ColorScheme.dark(
+                primary: AppColors.secondary,
+              ),
+            ),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.all(20),
+              childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              title: Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 20, color: AppColors.secondary),
+                  const SizedBox(width: 12),
+                  Text(
+                    prediccion.fecha,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  children: [
+                    _buildMiniStatChip(
+                      '${prediccion.totalPedidos} pedidos',
+                      Icons.shopping_bag_outlined,
+                      const Color(0xFF2196F3),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildMiniStatChip(
+                      '${(prediccion.confianzaPromedio * 100).toStringAsFixed(0)}%',
+                      Icons.show_chart,
+                      AppColors.secondary,
+                    ),
+                  ],
+                ),
+              ),
+              children: [
+                const Divider(height: 1, color: Color(0xFF2A2A2A)),
+                const SizedBox(height: 16),
+                ...prediccion.items.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildPrediccionCardCompact(item),
+                )).toList(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMiniStatChip(String text, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrediccionCardCompact(PrediccionItemDTO item) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${item.productoNombre} - ${item.saborNombre}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.presentacion,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white60,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2196F3).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: const Color(0xFF2196F3).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${item.cantidad}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2196F3),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'un.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white60,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildTendenciaIcon(item.historico.tendencia),
+        ],
+      ),
     );
   }
 
@@ -735,27 +996,208 @@ class _PrediccionesScreenState extends State<PrediccionesScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildEstadisticaCard(
-          'Precisión del Modelo',
-          '${(estadisticas!.precision * 100).toStringAsFixed(1)}%',
-          Icons.analytics,
-          const Color(0xFF9C27B0),
+        // Header con rango de fechas
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2A2A2A), width: 1),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.date_range, size: 20, color: AppColors.secondary),
+              const SizedBox(width: 12),
+              Text(
+                '${estadisticas!.fechaInicio} - ${estadisticas!.fechaFin}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        _buildEstadisticaCard(
-          'Total Predicciones',
-          estadisticas!.totalPredicciones.toString(),
-          Icons.functions,
-          const Color(0xFF2196F3),
+
+        const SizedBox(height: 16),
+
+        // Estadísticas principales
+        Row(
+          children: [
+            Expanded(
+              child: _buildEstadisticaCard(
+                'Total Pedidos',
+                estadisticas!.totalPedidos.toString(),
+                Icons.shopping_bag_outlined,
+                const Color(0xFF2196F3),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildEstadisticaCard(
+                'Promedio Diario',
+                estadisticas!.ventaPromedioDiaria.toStringAsFixed(1),
+                Icons.timeline,
+                const Color(0xFF9C27B0),
+              ),
+            ),
+          ],
         ),
+
         const SizedBox(height: 12),
+
         _buildEstadisticaCard(
-          'Tendencia General',
-          estadisticas!.tendenciaGeneral,
-          Icons.show_chart,
+          'Producto Más Vendido',
+          estadisticas!.productoMasVendido,
+          Icons.local_pizza,
           AppColors.secondary,
         ),
+
+        const SizedBox(height: 12),
+
+        _buildEstadisticaCard(
+          'Sabor Más Vendido',
+          estadisticas!.saborMasVendido,
+          Icons.star,
+          const Color(0xFFFF9800),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Título de ventas por día
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_month, size: 20, color: Colors.white70),
+              const SizedBox(width: 8),
+              const Text(
+                'Ventas por Día',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Lista de ventas por día
+        ...estadisticas!.ventasPorDia.map((venta) => _buildVentaDiariaCard(venta)).toList(),
       ],
+    );
+  }
+
+  Widget _buildVentaDiariaCard(VentaDiariaDTO venta) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF2A2A2A), width: 1),
+      ),
+      child: Row(
+        children: [
+          // Fecha y día
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  venta.fecha,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  venta.diaSemana.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white60,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Pedidos
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2196F3).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: const Color(0xFF2196F3).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  venta.cantidadPedidos.toString(),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2196F3),
+                  ),
+                ),
+                Text(
+                  'pedidos',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white60,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Total ventas
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: AppColors.secondary.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+            'Bs. ${venta.totalVentas.toStringAsFixed(2)}' ,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.secondary,
+                  ),
+                ),
+                Text(
+                  'total',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white60,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
